@@ -1,7 +1,7 @@
 // FollowUpDose Service Worker
 // Provides offline support, background sync, and push notifications
 
-const CACHE_NAME = 'followupdose-v1';
+const CACHE_NAME = 'followupdose-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
