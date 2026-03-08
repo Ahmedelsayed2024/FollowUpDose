@@ -105,8 +105,11 @@ body{font-family:'Cairo','Tajawal',sans-serif;background:var(--bg);color:var(--t
 .dose-name{font-size:.92rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dose-detail{font-size:.72rem;color:var(--muted);margin-top:2px}
 .dose-qty{font-size:.68rem;font-weight:700;color:var(--primary);background:var(--primary-pale);border-radius:6px;padding:2px 6px;margin-top:3px;display:inline-block}
-.dose-time{font-size:.95rem;font-weight:700;color:var(--primary);text-align:left;white-space:nowrap;min-width:42px}
+.dose-time{font-size:.88rem;font-weight:700;color:var(--primary);text-align:center;white-space:nowrap;min-width:52px;display:flex;flex-direction:column;align-items:center;line-height:1.2}
 .dose-time.missed{color:var(--coral)}
+.dose-time.taken{color:var(--teal-dark);opacity:.7}
+.t12-num{font-size:.9rem;font-weight:900}
+.t12-per{font-size:.7rem;font-weight:800;margin-top:1px;letter-spacing:.5px}
 .check-btn{width:30px;height:30px;border-radius:50%;border:2.5px solid var(--teal);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:all .2s;flex-shrink:0;color:transparent}
 .check-btn.checked{background:var(--teal);color:#fff;border-color:var(--teal)}
 .check-btn:active{transform:scale(.85)}
@@ -884,7 +887,21 @@ const save = () => {
 // ══════════════════════════════════════════
 const uid  = () => Date.now().toString(36)+Math.random().toString(36).slice(2);
 const pad  = n => String(n).padStart(2,'0');
-const fmtT = (h,m) => `${pad(h)}:${pad(m)}`;
+const fmtT = (h,m) => `${pad(h)}:${pad(m)}`; // internal 24h storage
+
+// Display helper: converts "22:08" → "10:08\nم" or "08:30" → "8:30\nص"
+function fmt12(timeStr24, html){
+  if(!timeStr24) return '';
+  const [h,m] = timeStr24.split(':').map(Number);
+  const isAM  = h < 12;
+  const period = isAM ? 'ص' : 'م';
+  const h12    = h % 12 === 0 ? 12 : h % 12;
+  const numPart = h12 + ':' + pad(m);
+  if(html === false) return numPart + ' ' + period;
+  // HTML version: period on its own small line with color
+  const color = isAM ? '#f39c12' : '#8e44ad';
+  return `<span class="t12-num">${numPart}</span><span class="t12-per" style="color:${color}">${period}</span>`;
+}
 const dayKey = d => { const x=new Date(d); return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`; };
 const arabicDay   = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const arabicMonth = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -949,7 +966,7 @@ function calcAgeDetails(dob) {
 // ── CLOCK ──────────────────────────────────
 const updateClock = () => {
   const n=new Date();
-  const timeStr = `${arabicDay[n.getDay()]}، ${fmtDate(n)} — ${fmtT(n.getHours(),n.getMinutes())}`;
+  const timeStr = `${arabicDay[n.getDay()]}، ${fmtDate(n)} — ${fmt12(fmtT(n.getHours(),n.getMinutes()),false)}`;
   const el = document.getElementById('headerTime');
   if(el) el.textContent = timeStr;
   const g = document.getElementById('headerGreeting');
@@ -1131,7 +1148,7 @@ function renderDay(){
           ${catLabel}${badge}
         </div>
       </div>
-      <div class="dose-time ${d.status}">${d.dose.time}</div>
+      <div class="dose-time ${d.status}">${fmt12(d.dose.time)}</div>
       <button class="check-btn ${d.status==='taken'?'checked':''}" onclick="event.stopPropagation();quickTake('${d.med.id}','${dk}','${d.dose.time}',${d.dose.h},${d.dose.m})">✓</button>
     </div>`;
   }).join('');
@@ -1162,10 +1179,10 @@ function openDoseAction(medId,time,dk,h,m){
 
   document.getElementById('actionModalTitle').textContent=(med.cat?getCatIcon(med.cat):med.icon||'💊')+' '+med.name;
   document.getElementById('actionModalDesc').innerHTML=
-    `الجرعة: <strong>${doseDisplay||'—'}</strong> &nbsp;|&nbsp; الميعاد: <strong>${time}</strong>`+
+    `الجرعة: <strong>${doseDisplay||'—'}</strong> &nbsp;|&nbsp; الميعاد: <strong>${fmt12(time,false)}</strong>`+
     (taken?'<br><span style="color:var(--teal);font-weight:700">✅ تم أخذها</span>':'');
-  document.getElementById('nowTimeLabel').textContent=nowStr;
-  document.getElementById('schedTimeLabel').textContent=time;
+  document.getElementById('nowTimeLabel').textContent=fmt12(nowStr,false);
+  document.getElementById('schedTimeLabel').textContent=fmt12(time,false);
   document.getElementById('customTimeRow').classList.remove('show');
   document.getElementById('customTimeInput').value=nowStr;
   document.getElementById('doseActionModal').classList.add('open');
@@ -1237,7 +1254,7 @@ function openDoseDetail(medId,time,dk){
   document.getElementById('doseModalContent').innerHTML=`
     ${med.photo?`<img src="${med.photo}" style="width:100%;max-height:160px;object-fit:cover;border-radius:14px;margin-bottom:14px">`:''}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div class="stat-card"><div class="stat-num" style="font-size:1.1rem">${time}</div><div class="stat-lbl">وقت الجرعة</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:1.1rem">${fmt12(time,false)}</div><div class="stat-lbl">وقت الجرعة</div></div>
       <div class="stat-card"><div class="stat-num" style="font-size:1.1rem;color:var(--pink)">${doseDisplay}</div><div class="stat-lbl">الجرعة</div></div>
     </div>
     <div class="info-card">
@@ -1668,7 +1685,7 @@ function renderStats(){
   });
   const sorted=Object.entries(timeCounts).sort((a,b)=>b[1]-a[1]);
   document.getElementById('bestTimeStats').innerHTML=sorted.length
-    ?sorted.slice(0,3).map(([h,c])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>الساعة ${h}:00</span><span style="color:var(--teal);font-weight:700">${c} جرعة</span></div>`).join('')
+    ?sorted.slice(0,3).map(([h,c])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>${fmt12(h+':00',false)}</span><span style="color:var(--teal);font-weight:700">${c} جرعة</span></div>`).join('')
     :'لا توجد بيانات كافية بعد';
 }
 
@@ -1958,7 +1975,7 @@ function fireNextAlarm(){
     document.getElementById('alarmIcon').textContent=item.med.icon||'💊';
   }
   document.getElementById('alarmName').textContent=item.med.name;
-  document.getElementById('alarmDetail').textContent=`الجرعة: ${doseDisplay||item.med.dose} — الساعة ${item.dose.time}`;
+  document.getElementById('alarmDetail').textContent=`الجرعة: ${doseDisplay||item.med.dose} — ${fmt12(item.dose.time,false)}`;
   document.getElementById('alarmToast').classList.add('show');
   playSound('alarm');
   if(settings.vibrationEnabled&&navigator.vibrate) navigator.vibrate([300,200,300,200,300]);
