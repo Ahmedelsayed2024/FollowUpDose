@@ -263,6 +263,60 @@ select.form-input{appearance:none}
 .rb-close{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:4px 9px;font-family:'Cairo',sans-serif;font-size:.72rem;cursor:pointer}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--primary-pale);border-radius:4px}
 .divider{height:1px;background:var(--border);margin:10px 0}
+
+/* ── TIME PERIOD CHIPS in header ── */
+.period-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-top:10px;scrollbar-width:none}
+.period-chips::-webkit-scrollbar{display:none}
+.period-chip{flex-shrink:0;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:#fff;border-radius:20px;padding:5px 12px;font-family:'Cairo',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);transition:all .2s}
+.period-chip.active{background:#fff;color:var(--primary);border-color:#fff}
+
+/* ── HEADER SUMMARY BANDS ── */
+.hdr-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.hdr-band{background:rgba(255,255,255,.15);border-radius:10px;padding:7px 6px;text-align:center;backdrop-filter:blur(4px)}
+.hdr-band-num{font-size:1.2rem;font-weight:900;color:#fff;line-height:1}
+.hdr-band-lbl{font-size:.58rem;color:rgba(255,255,255,.8);font-weight:600;margin-top:1px}
+.hdr-band.taken .hdr-band-num{color:#55efc4}
+.hdr-band.missed .hdr-band-num{color:#ff7675}
+.hdr-band.upcoming .hdr-band-num{color:#74b9ff}
+
+/* ── SECTION TABS (تم / فائت / قادم) ── */
+.dose-section-tabs{display:flex;gap:6px;margin-bottom:12px}
+.dst{flex:1;padding:8px 4px;border:none;border-radius:10px;font-family:'Cairo',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .2s;position:relative}
+.dst.taken-tab{background:var(--teal-light);color:var(--teal-dark)}
+.dst.missed-tab{background:var(--coral-light);color:var(--coral)}
+.dst.upcoming-tab{background:var(--primary-pale);color:var(--primary)}
+.dst.active-tab{box-shadow:0 3px 10px rgba(0,0,0,.12);transform:translateY(-1px)}
+.dst .dst-cnt{display:inline-block;background:rgba(0,0,0,.1);border-radius:10px;padding:0 6px;margin-right:3px;font-size:.65rem}
+
+/* ── CATEGORY PILLS ── */
+.cat-picker{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.cat-opt{border:2px solid var(--border);border-radius:10px;padding:7px 10px;font-family:'Cairo',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;color:var(--text);background:#fff;transition:all .15s;display:flex;align-items:center;gap:4px}
+.cat-opt.selected{border-color:var(--primary);background:var(--primary-pale);color:var(--primary)}
+.cat-badge{display:inline-flex;align-items:center;gap:3px;font-size:.6rem;font-weight:700;border-radius:6px;padding:2px 7px;margin-top:3px}
+.cat-antibiotic{background:#fde8f4;color:#c0392b}
+.cat-spray{background:#e3f2fd;color:#1565c0}
+.cat-syrup{background:#e0f7f4;color:#00695c}
+.cat-suppository{background:#f3e5f5;color:#6a1b9a}
+.cat-inhale{background:#e8f5e9;color:#2e7d32}
+.cat-drops{background:#fff8e1;color:#e65100}
+.cat-pill{background:#fce4ec;color:#880e4f}
+.cat-injection{background:#e8eaf6;color:#283593}
+.cat-cream{background:#fafafa;color:#424242;border:1px solid var(--border)}
+
+/* ── DOSE ACTION MODAL ── */
+.time-action-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.ta-btn{padding:13px 8px;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;text-align:center}
+.ta-btn:active{transform:scale(.97)}
+.ta-btn.now{background:linear-gradient(135deg,var(--teal),#00cec9);color:#fff}
+.ta-btn.sched{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff}
+.ta-btn.custom{background:var(--gold-light);color:var(--gold);border:2px solid var(--gold)}
+.ta-btn.skip{background:var(--coral-light);color:var(--coral);border:2px solid var(--coral)}
+.custom-time-row{display:none;margin-top:10px;gap:8px;align-items:center}
+.custom-time-row.show{display:flex}
+
+/* ── SNOOZE OPTIONS in notification toast ── */
+.snooze-opts{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+.snooze-opt-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:4px 9px;font-family:'Cairo',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
@@ -270,13 +324,18 @@ select.form-input{appearance:none}
 <!-- ═══ ALARM TOAST ═══ -->
 <div class="alarm-toast" id="alarmToast">
   <div class="alarm-toast-icon" id="alarmIcon">💊</div>
-  <div class="alarm-toast-text">
+  <div class="alarm-toast-text" style="flex:1">
     <strong id="alarmName">الدواء</strong>
     <small id="alarmDetail">حان وقت الجرعة!</small>
+    <div class="snooze-opts" id="snoozeOpts">
+      <button class="snooze-opt-btn" onclick="snoozeAlarm(5)">5د</button>
+      <button class="snooze-opt-btn" onclick="snoozeAlarm(10)">10د</button>
+      <button class="snooze-opt-btn" onclick="snoozeAlarm(15)">15د</button>
+      <button class="snooze-opt-btn" onclick="snoozeAlarm(30)">30د</button>
+    </div>
   </div>
   <div class="alarm-actions">
     <button class="alarm-dismiss" onclick="dismissAlarm()">تم ✓</button>
-    <button class="alarm-snooze" onclick="snoozeAlarm()">⏰ 10 دقائق</button>
   </div>
 </div>
 
@@ -293,7 +352,13 @@ select.form-input{appearance:none}
         <button class="hdr-btn" onclick="navigateTo('pageProfile')" title="الملف الشخصي">👤</button>
       </div>
     </div>
-    <div class="view-toggle">
+    <!-- Summary bands: تم / فائت / قادم -->
+    <div class="hdr-summary">
+      <div class="hdr-band taken"><div class="hdr-band-num" id="hdrTaken">0</div><div class="hdr-band-lbl">✅ تم أخذها</div></div>
+      <div class="hdr-band missed"><div class="hdr-band-num" id="hdrMissed">0</div><div class="hdr-band-lbl">❌ فائتة</div></div>
+      <div class="hdr-band upcoming"><div class="hdr-band-num" id="hdrUpcoming">0</div><div class="hdr-band-lbl">⏰ قادمة</div></div>
+    </div>
+    <div class="view-toggle" style="margin-top:10px">
       <button class="view-btn active" id="btnDay" onclick="switchView('day')">📅 يوميّ</button>
       <button class="view-btn" id="btnWeek" onclick="switchView('week')">📆 أسبوعيّ</button>
     </div>
@@ -311,12 +376,13 @@ select.form-input{appearance:none}
         <div id="reschedText" style="flex:1"></div>
         <button class="rb-close" onclick="document.getElementById('reschedBanner').classList.remove('show')">×</button>
       </div>
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">إجمالي الجرعات</div></div>
-        <div class="stat-card"><div class="stat-num" id="statTaken" style="color:var(--teal)">0</div><div class="stat-lbl">تم أخذها</div></div>
-        <div class="stat-card"><div class="stat-num" id="statMissed" style="color:var(--coral)">0</div><div class="stat-lbl">فائتة</div></div>
+      <!-- Section filter tabs -->
+      <div class="dose-section-tabs" id="doseSectionTabs">
+        <button class="dst taken-tab active-tab" id="tabTaken"   onclick="filterSection('taken')"  >✅ <span class="dst-cnt" id="cntTaken">0</span> تم</button>
+        <button class="dst missed-tab"           id="tabMissed"  onclick="filterSection('missed')" >❌ <span class="dst-cnt" id="cntMissed">0</span> فائتة</button>
+        <button class="dst upcoming-tab"         id="tabUpcoming" onclick="filterSection('upcoming')">⏰ <span class="dst-cnt" id="cntUpcoming">0</span> قادمة</button>
+        <button class="dst" style="background:var(--bg);color:var(--muted);border:1.5px solid var(--border)" id="tabAll" onclick="filterSection('all')">📋 الكل</button>
       </div>
-      <div class="sec-title"><span></span> جدول الجرعات</div>
       <div id="doseList"></div>
     </div>
     <!-- WEEK VIEW -->
@@ -584,6 +650,21 @@ select.form-input{appearance:none}
     </div>
 
     <div class="form-group">
+      <label class="form-label">تصنيف الدواء</label>
+      <div class="cat-picker" id="catPicker">
+        <button class="cat-opt selected" data-cat="syrup"       data-icon="🧪" onclick="selectCat(this)">🧪 شراب</button>
+        <button class="cat-opt"          data-cat="pill"        data-icon="💊" onclick="selectCat(this)">💊 حبوب</button>
+        <button class="cat-opt"          data-cat="antibiotic"  data-icon="🦠" onclick="selectCat(this)">🦠 مضاد حيوي</button>
+        <button class="cat-opt"          data-cat="spray"       data-icon="💨" onclick="selectCat(this)">💨 بخاخ</button>
+        <button class="cat-opt"          data-cat="suppository" data-icon="🟣" onclick="selectCat(this)">🟣 لبوس</button>
+        <button class="cat-opt"          data-cat="inhale"      data-icon="🌬️" onclick="selectCat(this)">🌬️ استنشاق</button>
+        <button class="cat-opt"          data-cat="drops"       data-icon="💧" onclick="selectCat(this)">💧 قطرة</button>
+        <button class="cat-opt"          data-cat="injection"   data-icon="💉" onclick="selectCat(this)">💉 حقنة</button>
+        <button class="cat-opt"          data-cat="cream"       data-icon="🧴" onclick="selectCat(this)">🧴 كريم/مرهم</button>
+      </div>
+    </div>
+
+    <div class="form-group">
       <label class="form-label">رمز الدواء</label>
       <div class="icon-picker" id="iconPicker">
         <div class="icon-opt selected" data-icon="💊" onclick="selectIcon(this)">💊</div>
@@ -677,6 +758,27 @@ select.form-input{appearance:none}
   </div>
 </div>
 
+<!-- ═══ DOSE TIME ACTION MODAL ═══ -->
+<div class="modal-overlay" id="doseActionModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="actionModalTitle">⏱️ تسجيل الجرعة</h2>
+    <div id="actionModalBody">
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:14px" id="actionModalDesc"></div>
+      <div class="time-action-btns">
+        <button class="ta-btn now" onclick="doTakeNow()">✅ أخذتها الآن<br><small id="nowTimeLabel" style="opacity:.8;font-size:.7rem"></small></button>
+        <button class="ta-btn sched" onclick="doTakeOnSchedule()">📅 أخذتها بالميعاد<br><small id="schedTimeLabel" style="opacity:.8;font-size:.7rem"></small></button>
+        <button class="ta-btn custom" onclick="showCustomTime()">🕐 وقت آخر</button>
+        <button class="ta-btn skip" onclick="doSkipDose()">⏭️ تخطي الجرعة</button>
+      </div>
+      <div class="custom-time-row" id="customTimeRow">
+        <input type="time" class="form-input" id="customTimeInput" style="flex:1">
+        <button class="submit-btn" style="width:auto;padding:11px 16px;margin-top:0" onclick="doTakeCustom()">تأكيد</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ PROFILE EDIT MODAL ═══ -->
 <div class="modal-overlay" id="profileModal" onclick="closeModal(event)">
   <div class="modal">
@@ -755,14 +857,19 @@ let settings      = JSON.parse(localStorage.getItem('settings_v4') || JSON.strin
   alarmSound: 'beep'
 }));
 
-let currentView     = 'day';
-let currentDayOffset= 0;
-let editingMedId    = null;
-let selectedIcon    = '💊';
-let currentMedPhoto = null; // base64
-let alarmQueue      = [];
-let alarmActive     = false;
-let audioCtx        = null;
+let currentView      = 'day';
+let currentDayOffset = 0;
+let editingMedId     = null;
+let selectedIcon     = '💊';
+let selectedCat      = 'syrup';
+let currentMedPhoto  = null;
+let alarmQueue       = [];
+let alarmActive      = false;
+let audioCtx         = null;
+let activeDoseFilter = 'all';   // 'taken'|'missed'|'upcoming'|'all'
+
+// pending action for dose time modal
+let _pendingAction   = null; // {medId, dk, time, h, m}
 
 const save = () => {
   localStorage.setItem('meds_v4', JSON.stringify(medicines));
@@ -924,12 +1031,38 @@ function changeDay(o){ currentDayOffset+=o; renderDay(); }
 // ══════════════════════════════════════════
 //  DAY RENDER
 // ══════════════════════════════════════════
+function getCatLabel(cat){
+  const map={syrup:'شراب',pill:'حبوب',antibiotic:'مضاد حيوي',spray:'بخاخ',suppository:'لبوس',inhale:'استنشاق',drops:'قطرة',injection:'حقنة',cream:'كريم'};
+  return map[cat]||cat||'';
+}
+function getCatIcon(cat){
+  const map={syrup:'🧪',pill:'💊',antibiotic:'🦠',spray:'💨',suppository:'🟣',inhale:'🌬️',drops:'💧',injection:'💉',cream:'🧴'};
+  return map[cat]||(cat?'💊':'💊');
+}
+function getCatCls(cat){
+  const map={syrup:'cat-syrup',pill:'cat-pill',antibiotic:'cat-antibiotic',spray:'cat-spray',suppository:'cat-suppository',inhale:'cat-inhale',drops:'cat-drops',injection:'cat-injection',cream:'cat-cream'};
+  return map[cat]||'';
+}
+
+function filterSection(sec){
+  activeDoseFilter = sec;
+  ['taken','missed','upcoming','all'].forEach(s=>{
+    const btn = document.getElementById('tab'+s.charAt(0).toUpperCase()+s.slice(1));
+    if(btn) btn.classList.toggle('active-tab', s===sec);
+  });
+  renderDay();
+}
+
 function renderDay(){
   const date=getDisplayDate(), now=new Date();
   const isToday=dayKey(date)===dayKey(now);
-  const dayName=isToday?'اليوم':(currentDayOffset===-1?'أمس':(currentDayOffset===1?'غداً':arabicDay[date.getDay()]));
+  // Period label
+  const h=now.getHours();
+  const period = h>=5&&h<12?'🌅 ص':h>=12&&h<17?'☀️ ظ':h>=17&&h<20?'🌆 م':'🌙 ي';
+  const dayName=isToday?('اليوم '+period):(currentDayOffset===-1?'أمس':(currentDayOffset===1?'غداً':arabicDay[date.getDay()]));
   document.getElementById('dayTitle').textContent=dayName;
   document.getElementById('dayDate').textContent=fmtDate(date);
+
   const dk=dayKey(date), allDoses=[];
   medicines.forEach(med=>{
     getDosesForDay(med,date).forEach(dose=>{
@@ -942,60 +1075,158 @@ function renderDay(){
     });
   });
   allDoses.sort((a,b)=>a.dose.time.localeCompare(b.dose.time));
-  const total=allDoses.length, taken=allDoses.filter(d=>d.status==='taken').length, missed=allDoses.filter(d=>d.status==='missed').length;
-  document.getElementById('statTotal').textContent=total;
-  document.getElementById('statTaken').textContent=taken;
-  document.getElementById('statMissed').textContent=missed;
 
-  // Next alarm highlight
+  const takenArr   = allDoses.filter(d=>d.status==='taken');
+  const missedArr  = allDoses.filter(d=>d.status==='missed');
+  const upcomingArr= allDoses.filter(d=>d.status==='upcoming');
+
+  // Update header bands
+  const hdrT=document.getElementById('hdrTaken'),hdrM=document.getElementById('hdrMissed'),hdrU=document.getElementById('hdrUpcoming');
+  if(hdrT) hdrT.textContent=takenArr.length;
+  if(hdrM) hdrM.textContent=missedArr.length;
+  if(hdrU) hdrU.textContent=upcomingArr.length;
+
+  // Update section tab counts
+  const ct=document.getElementById('cntTaken'),cm=document.getElementById('cntMissed'),cu=document.getElementById('cntUpcoming');
+  if(ct) ct.textContent=takenArr.length;
+  if(cm) cm.textContent=missedArr.length;
+  if(cu) cu.textContent=upcomingArr.length;
+
+  // Which to show
+  let toShow = allDoses;
+  if(activeDoseFilter==='taken')    toShow=takenArr;
+  else if(activeDoseFilter==='missed')   toShow=missedArr;
+  else if(activeDoseFilter==='upcoming') toShow=upcomingArr;
+
+  // Next alarm index
   let nextAlarmIdx=-1;
-  if(isToday){ for(let i=0;i<allDoses.length;i++){if(allDoses[i].status==='upcoming'){nextAlarmIdx=i;break;}} }
+  if(isToday){ for(let i=0;i<allDoses.length;i++){if(allDoses[i].status==='upcoming'){nextAlarmIdx=i;break;}}}
 
   const list=document.getElementById('doseList');
-  if(!allDoses.length){
-    list.innerHTML=`<div class="empty-state"><div class="e-icon">💊</div><p>لا توجد جرعات لهذا اليوم<br><small>اضغط + لإضافة دواء</small></p></div>`;
+  if(!toShow.length){
+    const emptyMsgs={taken:'لا توجد جرعات مأخوذة',missed:'لا توجد جرعات فائتة',upcoming:'لا توجد جرعات قادمة',all:'لا توجد جرعات لهذا اليوم'};
+    list.innerHTML=`<div class="empty-state"><div class="e-icon">💊</div><p>${emptyMsgs[activeDoseFilter]||''}<br><small>اضغط + لإضافة دواء</small></p></div>`;
     return;
   }
-  list.innerHTML=allDoses.map((d,idx)=>{
-    const isNext=idx===nextAlarmIdx;
+
+  list.innerHTML=toShow.map((d,idx)=>{
+    const isNext=allDoses.indexOf(d)===nextAlarmIdx;
     const cls=`dose-card ${isNext?'next-alarm':d.status}`;
+    const medIcon = d.med.cat ? getCatIcon(d.med.cat) : (d.med.icon||'💊');
     const picHtml = d.med.photo
       ? `<img class="med-pic" src="${d.med.photo}" alt="${d.med.name}">`
-      : `<div class="med-pic-placeholder">${d.med.icon||'💊'}</div>`;
+      : `<div class="med-pic-placeholder">${medIcon}</div>`;
     const doseDisplay = d.med.doseAmt ? `${d.med.doseAmt} ${d.med.doseUnit||'مل'}` : (d.med.dose||'');
+    const catLabel = d.med.cat ? `<span class="cat-badge ${getCatCls(d.med.cat)}">${getCatIcon(d.med.cat)} ${getCatLabel(d.med.cat)}</span>` : '';
     const badge = d.status==='taken'?`<span class="badge badge-taken">✓ تم</span>`:
                   isNext?`<span class="badge badge-next">⏰ التالي</span>`:
                   d.status==='missed'?`<span class="badge badge-missed">فائتة</span>`:'';
-    return `<div class="${cls}" onclick="openDoseDetail('${d.med.id}','${d.dose.time}','${dk}')">
+    return `<div class="${cls}" onclick="openDoseAction('${d.med.id}','${d.dose.time}','${dk}',${d.dose.h},${d.dose.m})">
       ${picHtml}
       <div class="dose-info">
         <div class="dose-name">${d.med.name}</div>
         <div class="dose-detail">${d.med.notes||'كل '+d.med.interval+' ساعة'}</div>
-        ${doseDisplay?`<div class="dose-qty">📏 ${doseDisplay}</div>`:''}
-        ${badge}
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">
+          ${doseDisplay?`<div class="dose-qty">📏 ${doseDisplay}</div>`:''}
+          ${catLabel}${badge}
+        </div>
       </div>
       <div class="dose-time ${d.status}">${d.dose.time}</div>
-      <button class="check-btn ${d.status==='taken'?'checked':''}" onclick="event.stopPropagation();toggleDose('${d.med.id}','${dk}','${d.dose.time}',${d.dose.h},${d.dose.m})">✓</button>
+      <button class="check-btn ${d.status==='taken'?'checked':''}" onclick="event.stopPropagation();quickTake('${d.med.id}','${dk}','${d.dose.time}',${d.dose.h},${d.dose.m})">✓</button>
     </div>`;
   }).join('');
 }
+// Quick-take from checkmark button (no modal)
+function quickTake(medId,dk,time,h,m){
+  const key=takenKey(medId,dk,time);
+  if(takenLog[key]){
+    delete takenLog[key];
+    save(); renderDay(); return;
+  }
+  // Take at current time and reschedule
+  _applyTakeAtTime(medId,dk,time,h,m, new Date());
+}
 
 function toggleDose(medId,dk,time,h,m){
+  quickTake(medId,dk,time,h,m);
+}
+
+// Open the full dose action modal
+function openDoseAction(medId,time,dk,h,m){
+  const med=medicines.find(m2=>m2.id===medId); if(!med) return;
+  _pendingAction={medId,dk,time,h,m};
+  const now=new Date();
+  const nowStr=fmtT(now.getHours(),now.getMinutes());
+  const doseDisplay=med.doseAmt?`${med.doseAmt} ${med.doseUnit||'مل'}`:(med.dose||'');
+  const key=takenKey(medId,dk,time), taken=takenLog[key];
+
+  document.getElementById('actionModalTitle').textContent=(med.cat?getCatIcon(med.cat):med.icon||'💊')+' '+med.name;
+  document.getElementById('actionModalDesc').innerHTML=
+    `الجرعة: <strong>${doseDisplay||'—'}</strong> &nbsp;|&nbsp; الميعاد: <strong>${time}</strong>`+
+    (taken?'<br><span style="color:var(--teal);font-weight:700">✅ تم أخذها</span>':'');
+  document.getElementById('nowTimeLabel').textContent=nowStr;
+  document.getElementById('schedTimeLabel').textContent=time;
+  document.getElementById('customTimeRow').classList.remove('show');
+  document.getElementById('customTimeInput').value=nowStr;
+  document.getElementById('doseActionModal').classList.add('open');
+}
+
+function _applyTakeAtTime(medId,dk,time,schedH,schedM,actualDate){
   const key=takenKey(medId,dk,time);
-  if(takenLog[key]){ delete takenLog[key]; }
-  else {
-    const delta=applyReschedule(medId,h,m);
-    takenLog[key]={ts:Date.now(),delta:delta||0};
-    if(delta&&Math.abs(delta)>=2){
-      const banner=document.getElementById('reschedBanner'), txt=document.getElementById('reschedText');
-      txt.textContent=`تم ضبط جدول الدواء (${delta>0?'+':'-'}${Math.abs(delta)} دقيقة)`;
-      banner.classList.add('show');
-      setTimeout(()=>banner.classList.remove('show'),4000);
-    }
-    playSound('taken');
-    if(settings.vibrationEnabled&&navigator.vibrate) navigator.vibrate([100,50,100]);
+  // Compute delta between actual take time and scheduled time
+  const actualH=actualDate.getHours(), actualM=actualDate.getMinutes();
+  const delta=(actualH*60+actualM)-(schedH*60+schedM);
+  if(Math.abs(delta)>=2){
+    reschedOffsets[medId]=(reschedOffsets[medId]||0)+delta;
+    const banner=document.getElementById('reschedBanner'), txt=document.getElementById('reschedText');
+    if(txt) txt.textContent=`تم تحديث جدول الجرعات القادمة (${delta>0?'+':'-'}${Math.abs(delta)} دقيقة)`;
+    if(banner) { banner.classList.add('show'); setTimeout(()=>banner.classList.remove('show'),4000); }
   }
+  takenLog[key]={ts:actualDate.getTime(),takenAt:fmtT(actualH,actualM),delta:delta||0};
+  playSound('taken');
+  if(settings.vibrationEnabled&&navigator.vibrate) navigator.vibrate([100,50,100]);
   save(); renderDay();
+}
+
+function doTakeNow(){
+  if(!_pendingAction) return;
+  const {medId,dk,time,h,m}=_pendingAction;
+  _applyTakeAtTime(medId,dk,time,h,m,new Date());
+  closeAllModals(); showInfoToast('تم تسجيل الجرعة ✓');
+}
+
+function doTakeOnSchedule(){
+  if(!_pendingAction) return;
+  const {medId,dk,time,h,m}=_pendingAction;
+  // Take exactly at scheduled time — no delta, no rescheduling
+  const key=takenKey(medId,dk,time);
+  takenLog[key]={ts:Date.now(),takenAt:time,delta:0};
+  playSound('taken');
+  if(settings.vibrationEnabled&&navigator.vibrate) navigator.vibrate([100,50,100]);
+  save(); renderDay(); closeAllModals(); showInfoToast('تم تسجيل الجرعة بالميعاد ✓');
+}
+
+function showCustomTime(){
+  document.getElementById('customTimeRow').classList.add('show');
+}
+
+function doTakeCustom(){
+  if(!_pendingAction) return;
+  const {medId,dk,time,h,m}=_pendingAction;
+  const val=document.getElementById('customTimeInput').value;
+  if(!val) return;
+  const [ch,cm]=val.split(':').map(Number);
+  const customDate=new Date(); customDate.setHours(ch,cm,0,0);
+  _applyTakeAtTime(medId,dk,time,h,m,customDate);
+  closeAllModals(); showInfoToast('تم تسجيل الجرعة بالوقت المخصص ✓');
+}
+
+function doSkipDose(){
+  if(!_pendingAction) return;
+  const {medId,dk,time}=_pendingAction;
+  const key=takenKey(medId,dk,time);
+  takenLog[key]={ts:Date.now(),skipped:true,delta:0};
+  save(); renderDay(); closeAllModals(); showInfoToast('تم تخطي الجرعة');
 }
 
 function openDoseDetail(medId,time,dk){
@@ -1068,7 +1299,7 @@ function renderWeek(){
 //  ADD / EDIT MODAL
 // ══════════════════════════════════════════
 function openAddModal(){
-  editingMedId=null; currentMedPhoto=null; selectedIcon='💊';
+  editingMedId=null; currentMedPhoto=null; selectedIcon='💊'; selectedCat='syrup';
   document.getElementById('modalTitle').textContent='➕ إضافة دواء جديد';
   document.getElementById('medName').value='';
   document.getElementById('medDoseAmt').value='';
@@ -1081,12 +1312,13 @@ function openAddModal(){
   document.getElementById('deleteBtn').style.display='none';
   document.getElementById('photoPreview').innerHTML='<div style="font-size:2rem;margin-bottom:4px">📷</div><div class="ph-hint">انقر لإضافة صورة الدواء</div>';
   document.querySelectorAll('.icon-opt').forEach(o=>o.classList.toggle('selected',o.dataset.icon==='💊'));
+  document.querySelectorAll('.cat-opt').forEach(o=>o.classList.toggle('selected',o.dataset.cat==='syrup'));
   document.getElementById('addModal').classList.add('open');
 }
 
 function openEditModal(medId){
   const med=medicines.find(m=>m.id===medId); if(!med) return;
-  editingMedId=medId; currentMedPhoto=med.photo||null; selectedIcon=med.icon||'💊';
+  editingMedId=medId; currentMedPhoto=med.photo||null; selectedIcon=med.icon||'💊'; selectedCat=med.cat||'syrup';
   document.getElementById('modalTitle').textContent='✏️ تعديل الدواء';
   document.getElementById('medName').value=med.name||'';
   document.getElementById('medDoseAmt').value=med.doseAmt||'';
@@ -1103,6 +1335,7 @@ function openEditModal(medId){
     document.getElementById('photoPreview').innerHTML='<div style="font-size:2rem;margin-bottom:4px">📷</div><div class="ph-hint">انقر لإضافة صورة الدواء</div>';
   }
   document.querySelectorAll('.icon-opt').forEach(o=>o.classList.toggle('selected',o.dataset.icon===selectedIcon));
+  document.querySelectorAll('.cat-opt').forEach(o=>o.classList.toggle('selected',o.dataset.cat===selectedCat));
   document.getElementById('addModal').classList.add('open');
 }
 
@@ -1132,6 +1365,7 @@ function saveMedicine(){
     id:        editingMedId || uid(),
     name,
     icon:      selectedIcon,
+    cat:       selectedCat,
     photo,
     doseAmt:   doseAmt || null,
     doseUnit,
@@ -1168,6 +1402,18 @@ function deleteMedicine(){
 function selectIcon(el){
   document.querySelectorAll('.icon-opt').forEach(o=>o.classList.remove('selected'));
   el.classList.add('selected'); selectedIcon=el.dataset.icon;
+}
+
+function selectCat(el){
+  document.querySelectorAll('.cat-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedCat=el.dataset.cat;
+  // Auto-set matching icon
+  const icon=el.dataset.icon;
+  if(icon){
+    selectedIcon=icon;
+    document.querySelectorAll('.icon-opt').forEach(o=>o.classList.toggle('selected',o.dataset.icon===icon));
+  }
 }
 
 function triggerMedPhotoUpload(){ document.getElementById('medPhotoInput').click(); }
@@ -1689,10 +1935,10 @@ function checkAlarms(){
     getDosesForDay(med,now).forEach(dose=>{
       if(dose.time===nowStr){
         const key=takenKey(med.id,dk,dose.time);
-        const fid=`fired_${med.id}__${dk}__${dose.time}`;
+        const fid='fired_'+med.id+'__'+dk+'__'+dose.time;
         if(!takenLog[key]&&!sessionStorage.getItem(fid)){
           sessionStorage.setItem(fid,'1');
-          alarmQueue.push({med,dose,key});
+          alarmQueue.push({med,dose,key,dk});
           if(!alarmActive) fireNextAlarm();
         }
       }
@@ -1724,24 +1970,23 @@ function dismissAlarm(){
   document.getElementById('alarmToast').classList.remove('show');
   if(alarmQueue.length){
     const item=alarmQueue.shift();
-    const delta=applyReschedule(item.med.id,item.dose.h,item.dose.m);
-    takenLog[item.key]={ts:Date.now(),delta:delta||0};
-    save(); renderDay();
+    _applyTakeAtTime(item.med.id, item.dk||dayKey(new Date()), item.dose.time, item.dose.h, item.dose.m, new Date());
   }
   setTimeout(()=>{alarmQueue.length?fireNextAlarm():alarmActive=false;},400);
 }
 
-function snoozeAlarm(){
+function snoozeAlarm(minutes){
+  const mins = (typeof minutes === 'number') ? minutes : 10;
   document.getElementById('alarmToast').classList.remove('show');
   if(alarmQueue.length){
-    const item=alarmQueue[0];
-    alarmQueue.shift();
+    const item=alarmQueue.shift();
     setTimeout(()=>{
       alarmQueue.unshift(item);
-      const fid=`fired_${item.med.id}__${dayKey(new Date())}__${item.dose.time}`;
+      const fid='fired_'+item.med.id+'__'+dayKey(new Date())+'__'+item.dose.time;
       sessionStorage.removeItem(fid);
       if(!alarmActive) fireNextAlarm();
-    },600000); // 10 minutes
+    }, mins * 60 * 1000);
+    showInfoToast('تم التأجيل ' + mins + ' دقيقة ⏰');
   }
   alarmActive=false;
 }
