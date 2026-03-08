@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>مُذكِّر الدواء</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal:#00b894;--teal-dark:#00897b;--teal-light:#e0f7f4;
+    --blue:#0984e3;--coral:#fd7272;--gold:#f9ca24;--purple:#a29bfe;
+    --dark:#1a1a2e;--card:#ffffff;--bg:#f0faf8;--text:#2d3436;
+    --muted:#636e72;--border:#dfe6e9;
+    --shadow:0 4px 24px rgba(0,184,148,.10);--radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Cairo','Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;overflow-x:hidden}
+
+  /* HEADER */
+  .header{background:linear-gradient(135deg,var(--teal-dark) 0%,var(--teal) 60%,#55efc4 100%);padding:48px 20px 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,137,123,.25)}
+  .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .header h1{font-size:1.5rem;font-weight:900;color:#fff}
+  .header-time{font-size:.75rem;color:rgba(255,255,255,.85);margin-top:2px}
+  .add-btn{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.5);color:#fff;border-radius:50%;width:44px;height:44px;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s}
+  .add-btn:active{transform:scale(.9)}
+  .view-toggle{display:flex;background:rgba(255,255,255,.18);border-radius:12px;padding:4px;backdrop-filter:blur(6px)}
+  .view-btn{flex:1;padding:8px;border:none;background:transparent;color:rgba(255,255,255,.75);font-family:'Cairo',sans-serif;font-size:.85rem;font-weight:600;border-radius:9px;cursor:pointer;transition:all .2s}
+  .view-btn.active{background:#fff;color:var(--teal-dark);box-shadow:0 2px 10px rgba(0,0,0,.1)}
+
+  /* CONTENT */
+  .content{padding:20px 16px 120px}
+
+  /* DAY NAV */
+  .day-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;background:#fff;border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow)}
+  .day-nav button{background:var(--teal-light);border:none;border-radius:10px;width:36px;height:36px;font-size:1.1rem;color:var(--teal-dark);cursor:pointer;font-weight:700;transition:all .15s}
+  .day-nav button:active{transform:scale(.9)}
+  .day-label{font-size:.95rem;font-weight:700;color:var(--dark);text-align:center}
+  .day-label small{display:block;font-size:.75rem;color:var(--muted);font-weight:400;margin-top:2px}
+
+  /* STATS */
+  .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat-card{background:#fff;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:var(--shadow)}
+  .stat-num{font-size:1.5rem;font-weight:900;color:var(--teal)}
+  .stat-lbl{font-size:.7rem;color:var(--muted);font-weight:500;margin-top:2px}
+
+  /* RESCHEDULE BANNER */
+  .resched-banner{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px;display:none;align-items:center;gap:10px;font-size:.82rem;font-weight:600;box-shadow:0 4px 16px rgba(108,92,231,.3)}
+  .resched-banner.show{display:flex}
+  .resched-banner .rb-icon{font-size:1.4rem;flex-shrink:0}
+  .resched-banner .rb-text{flex:1}
+  .resched-banner .rb-close{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:.75rem;cursor:pointer}
+
+  /* SECTION TITLE */
+  .sec-title{font-size:.95rem;font-weight:700;color:var(--dark);margin:16px 0 10px;display:flex;align-items:center;gap:6px}
+  .sec-title span{width:4px;height:18px;background:var(--teal);border-radius:4px;display:inline-block}
+
+  /* DOSE CARD */
+  .dose-card{background:#fff;border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;cursor:pointer;border-right:4px solid var(--border);transition:all .2s;position:relative;overflow:hidden}
+  .dose-card.taken{border-right-color:var(--teal);opacity:.72}
+  .dose-card.upcoming{border-right-color:var(--blue)}
+  .dose-card.missed{border-right-color:var(--coral)}
+  .dose-card.rescheduled{border-right-color:var(--purple)}
+  .dose-card.next-alarm{border-right-color:var(--gold);animation:pulse-card 1.5s infinite}
+  @keyframes pulse-card{0%,100%{box-shadow:var(--shadow)}50%{box-shadow:0 0 0 4px rgba(249,202,36,.25)}}
+
+  .dose-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+  .dose-card.taken .dose-icon{background:#e0f7f4}
+  .dose-card.upcoming .dose-icon{background:#e3f2fd}
+  .dose-card.missed .dose-icon{background:#ffeaea}
+  .dose-card.rescheduled .dose-icon{background:#f3f0ff}
+  .dose-card.next-alarm .dose-icon{background:#fffde7}
+
+  .dose-info{flex:1;min-width:0}
+  .dose-name{font-size:.95rem;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dose-detail{font-size:.75rem;color:var(--muted);margin-top:2px}
+  .dose-badge{display:inline-block;font-size:.62rem;font-weight:700;border-radius:6px;padding:2px 6px;margin-top:3px}
+  .badge-resched{background:#f3f0ff;color:#6c5ce7}
+  .badge-taken{background:#e0f7f4;color:var(--teal-dark)}
+  .badge-next{background:#fffde7;color:#b7950b}
+
+  .dose-time{font-size:1rem;font-weight:700;color:var(--teal-dark);text-align:left;white-space:nowrap;min-width:45px}
+  .dose-time.missed{color:var(--coral)}
+  .dose-time.upcoming{color:var(--blue)}
+  .dose-time.rescheduled{color:var(--purple)}
+
+  .check-btn{width:32px;height:32px;border-radius:50%;border:2.5px solid var(--teal);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .2s;flex-shrink:0;color:transparent}
+  .check-btn.checked{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .check-btn:active{transform:scale(.85)}
+
+  /* WEEK VIEW */
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:20px}
+  .week-day-col{text-align:center}
+  .week-day-name{font-size:.65rem;font-weight:700;color:var(--muted);margin-bottom:6px}
+  .week-day-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;margin:0 auto 4px;cursor:pointer;transition:all .2s;color:var(--text)}
+  .week-day-num.today{background:var(--teal);color:#fff}
+  .week-day-num.selected{background:var(--teal-dark);color:#fff}
+  .week-dot-row{display:flex;justify-content:center;gap:2px;flex-wrap:wrap;min-height:8px}
+  .week-dot{width:6px;height:6px;border-radius:50%}
+  .week-dot.taken{background:var(--teal)}.week-dot.missed{background:var(--coral)}.week-dot.upcoming{background:var(--blue)}.week-dot.rescheduled{background:var(--purple)}
+  .week-med-list{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  .week-med-row{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .week-med-row:last-child{border-bottom:none}
+  .week-med-icon{font-size:1.3rem;width:36px;height:36px;background:var(--teal-light);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .week-med-info{flex:1}
+  .week-med-name{font-size:.9rem;font-weight:700}
+  .week-med-detail{font-size:.72rem;color:var(--muted);margin-top:2px}
+  .week-progress{display:flex;gap:3px;margin-top:4px}
+  .week-prog-dot{width:10px;height:10px;border-radius:3px}
+  .week-prog-dot.done{background:var(--teal)}.week-prog-dot.miss{background:var(--coral)}.week-prog-dot.pend{background:var(--border)}.week-prog-dot.resch{background:var(--purple)}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+  .modal-overlay.open{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:#fff;border-radius:28px 28px 0 0;width:100%;max-width:430px;padding:24px 20px 40px;max-height:92vh;overflow-y:auto;animation:slideUp .25s ease}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 20px}
+  .modal h2{font-size:1.2rem;font-weight:900;color:var(--dark);margin-bottom:20px}
+  .form-group{margin-bottom:16px}
+  .form-label{font-size:.82rem;font-weight:700;color:var(--dark);margin-bottom:6px;display:block}
+  .form-input{width:100%;border:2px solid var(--border);border-radius:12px;padding:12px 14px;font-family:'Cairo',sans-serif;font-size:.9rem;color:var(--text);background:#fff;outline:none;transition:border-color .2s;direction:rtl}
+  .form-input:focus{border-color:var(--teal)}
+  select.form-input{appearance:none}
+  .icon-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .icon-opt{width:44px;height:44px;border-radius:12px;border:2px solid var(--border);background:var(--bg);cursor:pointer;font-size:1.4rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .icon-opt.selected{border-color:var(--teal);background:var(--teal-light)}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .submit-btn{width:100%;background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:#fff;border:none;border-radius:14px;padding:15px;font-family:'Cairo',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;margin-top:6px;transition:all .2s}
+  .submit-btn:active{transform:scale(.98)}
+  .delete-btn{background:#ffeaea;border:none;color:var(--coral);border-radius:10px;padding:8px 14px;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;margin-top:12px}
+
+  /* ALARM TOAST */
+  .alarm-toast{position:fixed;top:-130px;left:50%;transform:translateX(-50%);z-index:500;background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:#fff;border-radius:20px;padding:16px 20px;width:calc(100% - 32px);max-width:400px;box-shadow:0 8px 32px rgba(0,137,123,.4);display:flex;align-items:center;gap:12px;transition:top .4s cubic-bezier(.175,.885,.32,1.275)}
+  .alarm-toast.show{top:16px}
+  .alarm-toast-icon{font-size:2rem}
+  .alarm-toast-text{flex:1}
+  .alarm-toast-text strong{display:block;font-size:1rem;font-weight:700}
+  .alarm-toast-text small{font-size:.8rem;opacity:.85}
+  .alarm-dismiss{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:10px;padding:8px 12px;font-family:'Cairo',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer}
+
+  /* INFO BOX */
+  .info-box{background:var(--teal-light);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:.8rem;color:var(--teal-dark);font-weight:600;display:flex;align-items:flex-start;gap:8px}
+  .info-box .ib-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+
+  .empty-state{text-align:center;padding:50px 20px}
+  .empty-state .e-icon{font-size:4rem;margin-bottom:12px}
+  .empty-state p{color:var(--muted);font-size:.9rem}
+  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--teal-light);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- ALARM TOAST -->
+<div class="alarm-toast" id="alarmToast">
+  <div class="alarm-toast-icon" id="alarmIcon">💊</div>
+  <div class="alarm-toast-text">
+    <strong id="alarmName">الدواء</strong>
+    <small id="alarmDetail">حان وقت الجرعة!</small>
+  </div>
+  <button class="alarm-dismiss" onclick="dismissAlarm()">تم ✓</button>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>مُذكِّر الدواء 💊</h1>
+      <div class="header-time" id="headerTime"></div>
+    </div>
+    <button class="add-btn" onclick="openAddModal()">＋</button>
+  </div>
+  <div class="view-toggle">
+    <button class="view-btn active" id="btnDay" onclick="switchView('day')">📅 يوميّ</button>
+    <button class="view-btn" id="btnWeek" onclick="switchView('week')">📆 أسبوعيّ</button>
+  </div>
+</div>
+
+<div class="content">
+  <!-- DAY VIEW -->
+  <div id="dayView">
+    <div class="day-nav">
+      <button onclick="changeDay(-1)">‹</button>
+      <div class="day-label"><span id="dayTitle"></span><small id="dayDate"></small></div>
+      <button onclick="changeDay(1)">›</button>
+    </div>
+    <!-- Reschedule banner -->
+    <div class="resched-banner" id="reschedBanner">
+      <div class="rb-icon">🔄</div>
+      <div class="rb-text" id="reschedText"></div>
+      <button class="rb-close" onclick="document.getElementById('reschedBanner').classList.remove('show')">×</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">إجمالي الجرعات</div></div>
+      <div class="stat-card"><div class="stat-num" id="statTaken" style="color:var(--teal)">0</div><div class="stat-lbl">تم أخذها</div></div>
+      <div class="stat-card"><div class="stat-num" id="statMissed" style="color:var(--coral)">0</div><div class="stat-lbl">فائتة</div></div>
+    </div>
+    <div class="sec-title"><span></span> جدول الجرعات</div>
+    <div id="doseList"></div>
+  </div>
+
+  <!-- WEEK VIEW -->
+  <div id="weekView" style="display:none">
+    <div class="week-grid" id="weekGrid"></div>
+    <div class="sec-title"><span></span> قائمة الأدوية</div>
+    <div class="week-med-list" id="weekMedList"></div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="addModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modalTitle">➕ إضافة دواء جديد</h2>
+    <div class="form-group">
+      <label class="form-label">اسم الدواء</label>
+      <input class="form-input" id="medName" placeholder="مثال: باراسيتامول 500">
+    </div>
+    <div class="form-group">
+      <label class="form-label">رمز الدواء</label>
+      <div class="icon-picker" id="iconPicker">
+        <div class="icon-opt selected" data-icon="💊" onclick="selectIcon(this)">💊</div>
+        <div class="icon-opt" data-icon="💉" onclick="selectIcon(this)">💉</div>
+        <div class="icon-opt" data-icon="🩺" onclick="selectIcon(this)">🩺</div>
+        <div class="icon-opt" data-icon="🫀" onclick="selectIcon(this)">🫀</div>
+        <div class="icon-opt" data-icon="🌡️" onclick="selectIcon(this)">🌡️</div>
+        <div class="icon-opt" data-icon="🧴" onclick="selectIcon(this)">🧴</div>
+        <div class="icon-opt" data-icon="💧" onclick="selectIcon(this)">💧</div>
+        <div class="icon-opt" data-icon="🌿" onclick="selectIcon(this)">🌿</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">الجرعة</label>
+        <input class="form-input" id="medDose" placeholder="مثال: حبتان">
+      </div>
+      <div class="form-group">
+        <label class="form-label">كل كم ساعة؟</label>
+        <select class="form-input" id="medInterval">
+          <option value="1">كل ساعة</option>
+          <option value="2">كل ساعتين</option>
+          <option value="3">كل 3 ساعات</option>
+          <option value="4">كل 4 ساعات</option>
+          <option value="6" selected>كل 6 ساعات</option>
+          <option value="8">كل 8 ساعات</option>
+          <option value="12">كل 12 ساعة</option>
+          <option value="24">مرة يومياً</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">وقت أول جرعة</label>
+        <input class="form-input" type="time" id="medStartTime" value="08:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">مدة العلاج</label>
+        <select class="form-input" id="medDuration">
+          <option value="1">يوم واحد</option>
+          <option value="3">3 أيام</option>
+          <option value="5">5 أيام</option>
+          <option value="7" selected>أسبوع</option>
+          <option value="10">10 أيام</option>
+          <option value="14">أسبوعان</option>
+          <option value="30">شهر</option>
+          <option value="90">3 أشهر</option>
+          <option value="999">مستمر</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">ملاحظات (اختياري)</label>
+      <input class="form-input" id="medNotes" placeholder="مثال: بعد الأكل">
+    </div>
+    <button class="submit-btn" onclick="saveMedicine()">حفظ الدواء 💾</button>
+    <div style="text-align:center">
+      <button class="delete-btn" id="deleteBtn" style="display:none" onclick="deleteMedicine()">🗑️ حذف الدواء</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOSE DETAIL MODAL -->
+<div class="modal-overlay" id="doseModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="doseModalTitle">تفاصيل الجرعة</h2>
+    <div id="doseModalContent"></div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ──────────────────────────────────────────────
+let medicines    = JSON.parse(localStorage.getItem('meds_v3') || '[]');
+let takenLog     = JSON.parse(localStorage.getItem('taken_v3') || '{}');
+// rescheduleOffsets: { medId: offsetMinutes }  — per-medicine running offset
+let reschedOffsets = JSON.parse(localStorage.getItem('resched_v3') || '{}');
+
+let currentView     = 'day';
+let currentDayOffset= 0;
+let editingMedId    = null;
+let selectedIcon    = '💊';
+let alarmQueue      = [];
+let alarmActive     = false;
+
+// ─── PERSIST ────────────────────────────────────────────
+const save = () => {
+  localStorage.setItem('meds_v3', JSON.stringify(medicines));
+  localStorage.setItem('taken_v3', JSON.stringify(takenLog));
+  localStorage.setItem('resched_v3', JSON.stringify(reschedOffsets));
+};
+
+// ─── HELPERS ────────────────────────────────────────────
+const uid  = () => Date.now().toString(36)+Math.random().toString(36).slice(2);
+const pad  = n => String(n).padStart(2,'0');
+const fmtT = (h,m) => `${pad(h)}:${pad(m)}`;
+const dayKey = d => { const x=new Date(d); return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`; };
+const arabicDay   = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const arabicMonth = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const fmtDate = d => `${d.getDate()} ${arabicMonth[d.getMonth()]} ${d.getFullYear()}`;
+const getDisplayDate = () => { const d=new Date(); d.setDate(d.getDate()+currentDayOffset); return d; };
+
+// ── CLOCK ───────────────────────────────────────────────
+const updateClock = () => {
+  const n=new Date();
+  document.getElementById('headerTime').textContent =
+    `${arabicDay[n.getDay()]}، ${fmtDate(n)} — ${fmtT(n.getHours(),n.getMinutes())}`;
+};
+setInterval(updateClock,1000); updateClock();
+
+// ─── DOSE GENERATION ────────────────────────────────────
+// Returns array of { time, h, m, isRescheduled } for a medicine on a date
+const getDosesForDay = (med, date) => {
+  const dk        = dayKey(date);
+  const medStart  = new Date(med.startDate+'T00:00:00');
+  const medEnd    = new Date(medStart);
+  medEnd.setDate(medEnd.getDate() + (med.duration===999 ? 3650 : med.duration-1));
+  if (dk < dayKey(medStart) || dk > dayKey(medEnd)) return [];
+
+  // Base anchor: startTime + reschedule offset (in minutes)
+  const [sh,sm]    = med.startTime.split(':').map(Number);
+  const baseOffset = reschedOffsets[med.id] || 0;      // minutes
+  let anchorMin    = sh*60 + sm + baseOffset;           // absolute minutes from midnight
+
+  const doses = [];
+  const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
+  const dayEnd   = new Date(date); dayEnd.setHours(23,59,59,999);
+
+  // Walk from medicine's true start datetime forward by interval
+  const startDT = new Date(medStart);
+  startDT.setHours(sh,sm,0,0);
+  // Apply offset to startDT
+  startDT.setMinutes(startDT.getMinutes() + baseOffset);
+
+  let cursor = new Date(startDT);
+  const intervalMs = med.interval * 3600000;
+
+  // Fast-forward cursor to first dose on or after dayStart
+  while (cursor < dayStart) cursor = new Date(cursor.getTime() + intervalMs);
+
+  while (cursor <= dayEnd) {
+    doses.push({
+      time: fmtT(cursor.getHours(), cursor.getMinutes()),
+      h: cursor.getHours(),
+      m: cursor.getMinutes(),
+      isRescheduled: baseOffset !== 0
+    });
+    cursor = new Date(cursor.getTime() + intervalMs);
+  }
+  return doses;
+};
+
+const takenKey = (mid, dk, time) => `${mid}__${dk}__${time}`;
+
+// ─── SMART RESCHEDULE ────────────────────────────────────
+// When user marks dose as taken at actual time T_actual (instead of scheduled T_sched),
+// we compute delta = T_actual - T_sched (minutes) and apply it as cumulative offset.
+// All future doses shift by this delta from their current schedule.
+const applyReschedule = (medId, scheduledH, scheduledM) => {
+  const now     = new Date();
+  const nowMin  = now.getHours()*60 + now.getMinutes();
+  const schedMin= scheduledH*60 + scheduledM;
+  const delta   = nowMin - schedMin;   // positive = took late, negative = took early
+
+  if (Math.abs(delta) < 2) return null; // ignore < 2 min difference
+  reschedOffsets[medId] = (reschedOffsets[medId] || 0) + delta;
+  save();
+  return delta;
+};
+
+// ─── VIEW SWITCH ─────────────────────────────────────────
+function switchView(v){
+  currentView=v;
+  document.getElementById('dayView').style.display  = v==='day' ?'block':'none';
+  document.getElementById('weekView').style.display = v==='week'?'block':'none';
+  document.getElementById('btnDay').classList.toggle('active',v==='day');
+  document.getElementById('btnWeek').classList.toggle('active',v==='week');
+  v==='week' ? renderWeek() : renderDay();
+}
+
+function changeDay(o){ currentDayOffset+=o; renderDay(); }
+
+// ─── DAY RENDER ──────────────────────────────────────────
+function renderDay(){
+  const date  = getDisplayDate();
+  const now   = new Date();
+  const isToday = dayKey(date)===dayKey(now);
+  const dayName = isToday?'اليوم':(currentDayOffset===-1?'أمس':(currentDayOffset===1?'غداً':arabicDay[date.getDay()]));
+  document.getElementById('dayTitle').textContent = dayName;
+  document.getElementById('dayDate').textContent  = fmtDate(date);
+
+  const dk = dayKey(date);
+  const allDoses = [];
+
+  medicines.forEach(med => {
+    getDosesForDay(med, date).forEach(dose => {
+      const key    = takenKey(med.id, dk, dose.time);
+      const taken  = !!takenLog[key];
+      const dt     = new Date(date); dt.setHours(dose.h, dose.m, 0, 0);
+      const isPast = dt < now;
+      const status = taken ? 'taken' : (isPast && isToday ? 'missed' : 'upcoming');
+      allDoses.push({ med, dose, taken, status, key, dt });
+    });
+  });
+
+  allDoses.sort((a,b)=>a.dt-b.dt);
+
+  const total  = allDoses.length;
+  const taken  = allDoses.filter(d=>d.taken).length;
+  const missed = allDoses.filter(d=>d.status==='missed').length;
+  document.getElementById('statTotal').textContent  = total;
+  document.getElementById('statTaken').textContent  = taken;
+  document.getElementById('statMissed').textContent = missed;
+
+  const nextIdx = allDoses.findIndex(d=>d.status==='upcoming');
+  const list = document.getElementById('doseList');
+
+  if(!allDoses.length){
+    list.innerHTML=`<div class="empty-state"><div class="e-icon">🌿</div><p>لا توجد جرعات لهذا اليوم<br>اضغط ＋ لإضافة دواء</p></div>`;
+    return;
+  }
+
+  list.innerHTML = allDoses.map((item,idx) => {
+    const isNext    = idx===nextIdx;
+    const isResch   = item.dose.isRescheduled;
+    const cardClass = item.taken ? 'taken' : isNext ? 'next-alarm' : isResch ? 'rescheduled' : item.status;
+    const timeClass = item.taken ? '' : item.status==='missed' ? 'missed' : isResch ? 'rescheduled' : 'upcoming';
+    let badge = '';
+    if (item.taken)      badge=`<span class="dose-badge badge-taken">✓ تم الأخذ</span>`;
+    else if (isNext)     badge=`<span class="dose-badge badge-next">⏰ التالي</span>`;
+    else if (isResch)    badge=`<span class="dose-badge badge-resched">🔄 مُعاد جدولته</span>`;
+    return `
+      <div class="dose-card ${cardClass}" onclick="openDoseDetail('${item.med.id}','${item.dose.time}','${dk}',${item.dose.h},${item.dose.m})">
+        <div class="dose-icon">${item.med.icon}</div>
+        <div class="dose-info">
+          <div class="dose-name">${item.med.name}</div>
+          <div class="dose-detail">${item.med.dose}${item.med.notes?' · '+item.med.notes:''}</div>
+          ${badge}
+        </div>
+        <div class="dose-time ${timeClass}">${item.dose.time}</div>
+        <button class="check-btn ${item.taken?'checked':''}"
+          onclick="toggleTaken(event,'${item.key}','${item.med.id}',${item.dose.h},${item.dose.m},'${dk}')">${item.taken?'✓':''}</button>
+      </div>`;
+  }).join('');
+}
+
+// ─── TOGGLE TAKEN (with smart reschedule) ───────────────
+function toggleTaken(e, key, medId, h, m, dk){
+  e.stopPropagation();
+  if (takenLog[key]) {
+    // Undo: remove taken + reverse reschedule delta stored
+    const entry = takenLog[key];
+    delete takenLog[key];
+    // Reverse the delta we applied when taking
+    if (entry && entry.delta !== undefined) {
+      reschedOffsets[medId] = (reschedOffsets[medId] || 0) - entry.delta;
+      if (reschedOffsets[medId] === 0) delete reschedOffsets[medId];
+    }
+    save(); renderDay(); return;
+  }
+
+  // Mark taken
+  const delta = applyReschedule(medId, h, m);
+  takenLog[key] = { ts: Date.now(), delta: delta || 0 };
+  save();
+
+  if (delta && Math.abs(delta) >= 2) {
+    const absDelta = Math.abs(delta);
+    const hrs  = Math.floor(absDelta/60);
+    const mins = absDelta % 60;
+    let msg = delta > 0
+      ? `تأخر ${hrs?hrs+'س ':''} ${mins?mins+'د':''}— تم إعادة جدولة الجرعات القادمة ✅`
+      : `مبكر ${hrs?hrs+'س ':''} ${mins?mins+'د':''}— تم تقديم الجرعات القادمة ✅`;
+    document.getElementById('reschedText').textContent = msg;
+    document.getElementById('reschedBanner').classList.add('show');
+    setTimeout(()=>document.getElementById('reschedBanner').classList.remove('show'), 6000);
+  }
+  renderDay();
+}
+
+// ─── DOSE DETAIL MODAL ───────────────────────────────────
+function openDoseDetail(medId, time, dk, h, m){
+  const med   = medicines.find(x=>x.id===medId);
+  if(!med) return;
+  const key   = takenKey(medId, dk, time);
+  const taken = !!takenLog[key];
+  const offset= reschedOffsets[medId] || 0;
+  const absO  = Math.abs(offset);
+  const oHrs  = Math.floor(absO/60);
+  const oMins = absO%60;
+  const offsetStr = offset===0 ? 'لا يوجد إزاحة' :
+    (offset>0 ? `متأخر ${oHrs?oHrs+'س ':''} ${oMins?oMins+'د':''}` : `مبكر ${oHrs?oHrs+'س ':''} ${oMins?oMins+'د':''}`);
+
+  document.getElementById('doseModalTitle').textContent = `${med.icon} ${med.name}`;
+  document.getElementById('doseModalContent').innerHTML = `
+    <div class="info-box"><div class="ib-icon">🔄</div>
+      <div>الجدولة الذكية: ${offsetStr}<br><small style="font-weight:400;opacity:.8">يُحدَّث تلقائياً عند أخذ الجرعة في وقت مختلف</small></div>
+    </div>
+    <div style="background:var(--teal-light);border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:.85rem;color:var(--muted)">الجرعة</span><span style="font-weight:700">${med.dose}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:.85rem;color:var(--muted)">الوقت المجدول</span>
+        <span style="font-weight:700;color:var(--teal-dark)">${time}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:.85rem;color:var(--muted)">كل</span><span style="font-weight:700">${med.interval} ساعة</span></div>
+      ${med.notes?`<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:.85rem;color:var(--muted)">ملاحظة</span><span style="font-weight:700">${med.notes}</span></div>`:''}
+    </div>
+    <div style="margin-bottom:14px;">
+      <label class="form-label">🕐 تعديل وقت هذه الجرعة يدوياً</label>
+      <input class="form-input" type="time" id="editTimeInput" value="${time}">
+      <div style="font-size:.73rem;color:var(--muted);margin-top:4px">⚡ يُعيد حساب جميع الجرعات القادمة من هذا الوقت</div>
+    </div>
+    <button class="submit-btn" onclick="updateDoseTime('${medId}','${dk}','${time}',${h},${m})">تحديث الوقت يدوياً 🔄</button>
+    <button class="submit-btn" style="background:${taken?'var(--coral)':'var(--teal)'};margin-top:8px;"
+      onclick="toggleTakenFromModal('${key}','${medId}',${h},${m},'${dk}')">${taken?'↩️ إلغاء تأكيد الأخذ':'✅ تأكيد أخذ الجرعة'}</button>
+    <button class="submit-btn" style="background:#636e72;margin-top:8px;" onclick="closeAllModals()">إغلاق</button>
+  `;
+  document.getElementById('doseModal').classList.add('open');
+}
+
+function toggleTakenFromModal(key,medId,h,m,dk){
+  document.getElementById('doseModal').classList.remove('open');
+  // simulate click on check button by calling toggleTaken directly
+  const fakeEvent={stopPropagation:()=>{}};
+  toggleTaken(fakeEvent,key,medId,h,m,dk);
+}
+
+function updateDoseTime(medId,dk,oldTime,oldH,oldM){
+  const newTime=document.getElementById('editTimeInput').value;
+  if(!newTime||newTime===oldTime){closeAllModals();return;}
+  const med=medicines.find(m=>m.id===medId);
+  if(!med)return;
+  const [nh,nm]=newTime.split(':').map(Number);
+  const delta=(nh*60+nm)-(oldH*60+oldM);
+  reschedOffsets[medId]=(reschedOffsets[medId]||0)+delta;
+  save(); closeAllModals(); renderDay();
+  showInfoToast(`⏰ تم تحديث ${med.name} — الجرعة القادمة: ${newTime}`);
+}
+
+// ─── ADD / EDIT MODAL ────────────────────────────────────
+function openAddModal(){
+  editingMedId=null;
+  document.getElementById('modalTitle').textContent='➕ إضافة دواء جديد';
+  document.getElementById('medName').value='';
+  document.getElementById('medDose').value='';
+  document.getElementById('medInterval').value='6';
+  document.getElementById('medStartTime').value='08:00';
+  document.getElementById('medDuration').value='7';
+  document.getElementById('medNotes').value='';
+  document.getElementById('deleteBtn').style.display='none';
+  selectedIcon='💊';
+  document.querySelectorAll('.icon-opt').forEach(el=>el.classList.toggle('selected',el.dataset.icon==='💊'));
+  document.getElementById('addModal').classList.add('open');
+}
+function openEditModal(medId){
+  const med=medicines.find(m=>m.id===medId);if(!med)return;
+  editingMedId=medId;
+  document.getElementById('modalTitle').textContent='✏️ تعديل الدواء';
+  document.getElementById('medName').value=med.name;
+  document.getElementById('medDose').value=med.dose;
+  document.getElementById('medInterval').value=med.interval;
+  document.getElementById('medStartTime').value=med.startTime;
+  document.getElementById('medDuration').value=med.duration;
+  document.getElementById('medNotes').value=med.notes||'';
+  document.getElementById('deleteBtn').style.display='inline-block';
+  selectedIcon=med.icon;
+  document.querySelectorAll('.icon-opt').forEach(el=>el.classList.toggle('selected',el.dataset.icon===med.icon));
+  document.getElementById('addModal').classList.add('open');
+}
+function selectIcon(el){
+  document.querySelectorAll('.icon-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected'); selectedIcon=el.dataset.icon;
+}
+function saveMedicine(){
+  const name=document.getElementById('medName').value.trim();
+  const dose=document.getElementById('medDose').value.trim();
+  const interval=parseInt(document.getElementById('medInterval').value);
+  const startTime=document.getElementById('medStartTime').value;
+  const duration=parseInt(document.getElementById('medDuration').value);
+  const notes=document.getElementById('medNotes').value.trim();
+  if(!name||!dose){alert('يرجى إدخال اسم الدواء والجرعة');return;}
+  if(editingMedId){
+    const med=medicines.find(m=>m.id===editingMedId);
+    Object.assign(med,{name,dose,interval,startTime,duration,notes,icon:selectedIcon});
+    // Reset offset if startTime changed
+  }else{
+    medicines.push({id:uid(),name,dose,interval,startTime,duration,notes,icon:selectedIcon,startDate:dayKey(new Date())});
+  }
+  save(); closeAllModals(); renderDay();
+  if(currentView==='week') renderWeek();
+}
+function deleteMedicine(){
+  if(!confirm('هل تريد حذف هذا الدواء؟'))return;
+  medicines=medicines.filter(m=>m.id!==editingMedId);
+  delete reschedOffsets[editingMedId];
+  save(); closeAllModals(); renderDay();
+  if(currentView==='week') renderWeek();
+}
+
+// ─── WEEK VIEW ───────────────────────────────────────────
+function renderWeek(){
+  const today=new Date();
+  const dow=today.getDay();
+  const startOfWeek=new Date(today); startOfWeek.setDate(today.getDate()-dow);
+  const weekDayNames=['أح','اث','ثل','أر','خم','جم','سب'];
+  let grid='';
+  for(let i=0;i<7;i++){
+    const d=new Date(startOfWeek); d.setDate(startOfWeek.getDate()+i);
+    const dk=dayKey(d); const isToday=dk===dayKey(today);
+    let tc=0,mc=0,uc=0;
+    medicines.forEach(med=>{
+      getDosesForDay(med,d).forEach(dose=>{
+        const k=takenKey(med.id,dk,dose.time);
+        if(takenLog[k]) tc++;
+        else{ const dt=new Date(d); dt.setHours(dose.h,dose.m,0,0); if(dt<today) mc++; else uc++; }
+      });
+    });
+    const dots=[...Array(Math.min(tc,3)).fill('<div class="week-dot taken"></div>'),
+      ...Array(Math.min(mc,2)).fill('<div class="week-dot missed"></div>'),
+      ...Array(Math.min(uc,2)).fill('<div class="week-dot upcoming"></div>')].join('');
+    grid+=`<div class="week-day-col" onclick=""><div class="week-day-name">${weekDayNames[i]}</div>
+      <div class="week-day-num ${isToday?'today':''}">${d.getDate()}</div>
+      <div class="week-dot-row">${dots}</div></div>`;
+  }
+  document.getElementById('weekGrid').innerHTML=grid;
+  const listEl=document.getElementById('weekMedList');
+  if(!medicines.length){listEl.innerHTML=`<div style="padding:30px;text-align:center;color:var(--muted)">لا توجد أدوية</div>`;return;}
+  listEl.innerHTML=medicines.map(med=>{
+    let dots='';
+    for(let i=0;i<7;i++){
+      const d=new Date(startOfWeek); d.setDate(startOfWeek.getDate()+i);
+      const dk=dayKey(d); const doses=getDosesForDay(med,d);
+      if(!doses.length){dots+=`<div class="week-prog-dot pend"></div>`;continue;}
+      const t=doses.filter(dose=>takenLog[takenKey(med.id,dk,dose.time)]).length;
+      const m=doses.filter(dose=>{const dt=new Date(d);dt.setHours(dose.h,dose.m,0,0);return !takenLog[takenKey(med.id,dk,dose.time)]&&dt<today;}).length;
+      dots+=t===doses.length?`<div class="week-prog-dot done"></div>`:m>0?`<div class="week-prog-dot miss"></div>`:`<div class="week-prog-dot pend"></div>`;
+    }
+    const offset=reschedOffsets[med.id]||0;
+    const offBadge=offset!==0?`<span style="font-size:.65rem;background:#f3f0ff;color:#6c5ce7;border-radius:5px;padding:1px 5px;font-weight:700">🔄 ${offset>0?'+':''}${Math.round(offset)}د</span>`:'';
+    return `<div class="week-med-row" onclick="openEditModal('${med.id}')">
+      <div class="week-med-icon">${med.icon}</div>
+      <div class="week-med-info">
+        <div class="week-med-name">${med.name} ${offBadge}</div>
+        <div class="week-med-detail">${med.dose} · كل ${med.interval} ساعة${med.notes?' · '+med.notes:''}</div>
+        <div class="week-progress">${dots}</div>
+      </div></div>`;
+  }).join('');
+}
+
+// ─── ALARM SYSTEM ────────────────────────────────────────
+function checkAlarms(){
+  const now=new Date(); const dk=dayKey(now);
+  const nowStr=fmtT(now.getHours(),now.getMinutes());
+  medicines.forEach(med=>{
+    getDosesForDay(med,now).forEach(dose=>{
+      if(dose.time===nowStr){
+        const key=takenKey(med.id,dk,dose.time);
+        const fid=`fired_${med.id}__${dk}__${dose.time}`;
+        if(!takenLog[key]&&!sessionStorage.getItem(fid)){
+          sessionStorage.setItem(fid,'1');
+          alarmQueue.push({med,dose,key});
+          if(!alarmActive) fireNextAlarm();
+        }
+      }
+    });
+  });
+}
+function fireNextAlarm(){
+  if(!alarmQueue.length){alarmActive=false;return;}
+  alarmActive=true;
+  const item=alarmQueue[0];
+  document.getElementById('alarmIcon').textContent=item.med.icon;
+  document.getElementById('alarmName').textContent=item.med.name;
+  document.getElementById('alarmDetail').textContent=`الجرعة: ${item.med.dose} — الساعة ${item.dose.time}`;
+  document.getElementById('alarmToast').classList.add('show');
+  if('Notification'in window&&Notification.permission==='granted')
+    new Notification(`💊 ${item.med.name}`,{body:`حان موعد الجرعة: ${item.med.dose}`});
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [[880,0],[1100,.3],[880,.6]].forEach(([freq,delay])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=freq;o.type='sine';
+      g.gain.setValueAtTime(.5,ctx.currentTime+delay);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+delay+.7);
+      o.start(ctx.currentTime+delay);o.stop(ctx.currentTime+delay+.7);
+    });
+  }catch(e){}
+}
+function dismissAlarm(){
+  document.getElementById('alarmToast').classList.remove('show');
+  if(alarmQueue.length){
+    const item=alarmQueue.shift();
+    // Smart reschedule on dismiss = now
+    const delta=applyReschedule(item.med.id,item.dose.h,item.dose.m);
+    takenLog[item.key]={ts:Date.now(),delta:delta||0};
+    save(); renderDay();
+  }
+  setTimeout(()=>{alarmQueue.length?fireNextAlarm():alarmActive=false;},400);
+}
+
+function showInfoToast(msg){
+  document.getElementById('alarmName').textContent=msg;
+  document.getElementById('alarmDetail').textContent='';
+  document.getElementById('alarmIcon').textContent='✅';
+  const t=document.getElementById('alarmToast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function closeModal(e){if(e.target.classList.contains('modal-overlay'))closeAllModals();}
+function closeAllModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));}
+
+if('Notification'in window&&Notification.permission==='default') Notification.requestPermission();
+setInterval(checkAlarms,30000); checkAlarms();
+renderDay();
+</script>
+</body>
+</html>
