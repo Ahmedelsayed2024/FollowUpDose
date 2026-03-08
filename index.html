@@ -505,10 +505,18 @@ select.form-input{appearance:none}
     <div class="settings-section">
       <div class="settings-section-title">📦 البيانات</div>
       <div class="settings-row" onclick="exportData()">
-        <div class="settings-row-icon" style="background:#e8f5e9">📥</div>
+        <div class="settings-row-icon" style="background:#e8f5e9">📤</div>
         <div class="settings-row-info">
           <div class="settings-row-title">تصدير البيانات</div>
-          <div class="settings-row-sub">حفظ نسخة احتياطية</div>
+          <div class="settings-row-sub">حفظ نسخة احتياطية JSON</div>
+        </div>
+        <div class="settings-row-action">›</div>
+      </div>
+      <div class="settings-row" onclick="triggerImport()">
+        <div class="settings-row-icon" style="background:#e3f2fd">📥</div>
+        <div class="settings-row-info">
+          <div class="settings-row-title">استيراد البيانات</div>
+          <div class="settings-row-sub">استعادة نسخة احتياطية</div>
         </div>
         <div class="settings-row-action">›</div>
       </div>
@@ -731,6 +739,9 @@ select.form-input{appearance:none}
   <button onclick="this.parentElement.style.display='none'" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:.85rem">×</button>
 </div>
 
+<!-- hidden import input -->
+<input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImport(event)">
+
 <script>
 // ══════════════════════════════════════════
 //  STATE & STORAGE
@@ -776,13 +787,56 @@ const getDisplayDate = () => { const d=new Date(); d.setDate(d.getDate()+current
 function calcAge(dob) {
   if (!dob) return '';
   const b = new Date(dob), n = new Date();
-  const months = (n.getFullYear()-b.getFullYear())*12 + n.getMonth()-b.getMonth();
-  if (months < 1) {
-    const days = Math.floor((n-b)/(1000*60*60*24));
-    return `${days} يوم`;
+  const totalDays = Math.floor((n - b) / (1000*60*60*24));
+  if (totalDays < 0) return 'تاريخ غير صحيح';
+
+  const years  = n.getFullYear() - b.getFullYear();
+  let months   = n.getMonth() - b.getMonth();
+  let days     = n.getDate()  - b.getDate();
+  if (days < 0) { months--; days += new Date(n.getFullYear(), n.getMonth(), 0).getDate(); }
+  let realYears = years; if (months < 0) { realYears--; months += 12; }
+
+  if (totalDays === 0) return 'اليوم الأول 🎉';
+  if (totalDays < 7)   return `${totalDays} أيام`;
+  if (totalDays < 30)  return `${Math.floor(totalDays/7)} أسابيع و${totalDays%7} أيام`;
+  if (realYears === 0 && months < 12) {
+    return days > 0 ? `${months} شهر و${days} يوم` : `${months} شهر`;
   }
-  if (months < 24) return `${months} شهر`;
-  return `${Math.floor(months/12)} سنة`;
+  if (realYears < 3) {
+    const totalMonths = realYears*12 + months;
+    return days > 0 ? `${totalMonths} شهر و${days} يوم` : `${totalMonths} شهر`;
+  }
+  return months > 0 ? `${realYears} سنة و${months} شهر` : `${realYears} سنة`;
+}
+
+function calcAgeDetails(dob) {
+  if (!dob) return null;
+  const b = new Date(dob), n = new Date();
+  const totalDays   = Math.floor((n - b) / (1000*60*60*24));
+  const totalWeeks  = Math.floor(totalDays / 7);
+  const years  = n.getFullYear() - b.getFullYear();
+  let months   = n.getMonth() - b.getMonth();
+  let days     = n.getDate()  - b.getDate();
+  if (days < 0) { months--; days += new Date(n.getFullYear(), n.getMonth(), 0).getDate(); }
+  let realYears = years; if (months < 0) { realYears--; months += 12; }
+  const totalMonths = realYears * 12 + months;
+
+  // Developmental milestones
+  const milestones = [
+    {at:0,   label:'الولادة 🎉'},
+    {at:14,  label:'ابتسامة اجتماعية 😊'},
+    {at:30,  label:'شهر كامل 🌙'},
+    {at:60,  label:'يتتبع الأشياء بعينيه 👀'},
+    {at:90,  label:'يرفع رأسه 💪'},
+    {at:120, label:'يضحك بصوت عالٍ 😄'},
+    {at:180, label:'يجلس بمساعدة 🧸'},
+    {at:270, label:'يحبو 🐣'},
+    {at:365, label:'السنة الأولى 🎂'},
+  ];
+  const nextMilestone = milestones.find(m => m.at > totalDays);
+  const lastMilestone = [...milestones].reverse().find(m => m.at <= totalDays);
+
+  return { totalDays, totalWeeks, totalMonths, realYears, months, days, nextMilestone, lastMilestone };
 }
 
 // ── CLOCK ──────────────────────────────────
@@ -1053,29 +1107,53 @@ function openEditModal(medId){
 }
 
 function saveMedicine(){
-  const name=document.getElementById('medName').value.trim();
-  if(!name){document.getElementById('medName').focus();return;}
-  const doseAmt=parseFloat(document.getElementById('medDoseAmt').value)||0;
-  const data={
-    id: editingMedId||uid(),
-    name, icon:selectedIcon, photo:currentMedPhoto,
-    doseAmt: doseAmt||null, doseUnit:document.getElementById('medDoseUnit').value,
-    dose: doseAmt?`${doseAmt} ${document.getElementById('medDoseUnit').value}`:'',
-    interval:parseInt(document.getElementById('medInterval').value),
-    startTime:document.getElementById('medStartTime').value,
-    startDate:document.getElementById('medStartDate').value||dayKey(new Date()),
-    duration:parseInt(document.getElementById('medDuration').value),
-    notes:document.getElementById('medNotes').value.trim(),
-    createdAt:Date.now()
+  const name = document.getElementById('medName').value.trim();
+  if(!name){
+    document.getElementById('medName').style.borderColor='var(--coral)';
+    document.getElementById('medName').focus();
+    setTimeout(()=>{document.getElementById('medName').style.borderColor='';},2000);
+    return;
+  }
+  const doseAmt   = parseFloat(document.getElementById('medDoseAmt').value) || 0;
+  const doseUnit  = document.getElementById('medDoseUnit').value;
+  const startDate = document.getElementById('medStartDate').value || dayKey(new Date());
+  const interval  = parseInt(document.getElementById('medInterval').value) || 6;
+  const duration  = parseInt(document.getElementById('medDuration').value) || 7;
+  const startTime = document.getElementById('medStartTime').value || '08:00';
+
+  // carry over existing photo if editing and no new photo was chosen
+  let photo = currentMedPhoto;
+  if(editingMedId && photo === null){
+    const existing = medicines.find(m => m.id === editingMedId);
+    if(existing) photo = existing.photo || null;
+  }
+
+  const data = {
+    id:        editingMedId || uid(),
+    name,
+    icon:      selectedIcon,
+    photo,
+    doseAmt:   doseAmt || null,
+    doseUnit,
+    dose:      doseAmt ? (doseAmt + ' ' + doseUnit) : '',
+    interval,
+    startTime,
+    startDate,
+    duration,
+    notes:     document.getElementById('medNotes').value.trim(),
+    createdAt: Date.now()
   };
+
   if(editingMedId){
-    const idx=medicines.findIndex(m=>m.id===editingMedId);
-    if(idx>-1) medicines[idx]={...medicines[idx],...data};
+    const idx = medicines.findIndex(m => m.id === editingMedId);
+    if(idx > -1) medicines[idx] = Object.assign({}, medicines[idx], data);
   } else {
     medicines.push(data);
   }
-  save(); closeAllModals(); renderDay();
-  showInfoToast(editingMedId?'تم تحديث الدواء ✓':'تمت إضافة الدواء ✓');
+  save();
+  closeAllModals();
+  renderDay();
+  showInfoToast(editingMedId ? 'تم تحديث الدواء ✓' : 'تمت إضافة الدواء ✓');
 }
 
 function deleteMedicine(){
@@ -1155,15 +1233,33 @@ function renderProfile(){
     emojiEl.textContent=profile.gender==='أنثى'?'👧':'👶';
   }
   document.getElementById('profileNameDisplay').textContent=profile.name||'اسم الطفل';
-  const age=profile.dob?calcAge(profile.dob):'';
-  document.getElementById('profileAgeDisplay').textContent=
-    [age&&`العمر: ${age}`, profile.weight&&`الوزن: ${profile.weight} كجم`, profile.bloodType&&`فصيلة الدم: ${profile.bloodType}`].filter(Boolean).join(' · ')||'أضف معلومات الطفل';
 
-  // Chips
+  // Detailed age
+  const ageDetails = profile.dob ? calcAgeDetails(profile.dob) : null;
+  const ageShort   = profile.dob ? calcAge(profile.dob) : '';
+  let ageHtml = '';
+  if(ageDetails){
+    const parts = [];
+    if(ageDetails.realYears > 0) parts.push(ageDetails.realYears + ' سنة');
+    if(ageDetails.months   > 0) parts.push(ageDetails.months   + ' شهر');
+    if(ageDetails.days     > 0) parts.push(ageDetails.days     + ' يوم');
+    ageHtml = parts.join(' و') || '0 أيام';
+  }
+  document.getElementById('profileAgeDisplay').textContent =
+    [ageHtml&&('العمر: '+ageHtml), profile.weight&&('الوزن: '+profile.weight+' كجم'), profile.bloodType&&('فصيلة الدم: '+profile.bloodType)].filter(Boolean).join(' · ')||'أضف معلومات الطفل';
+
+  // Age detail chips
   const chips=[];
-  if(profile.doctor) chips.push(`👨‍⚕️ ${profile.doctor}`);
-  if(profile.hospital) chips.push(`🏥 ${profile.hospital}`);
-  if(profile.allergies) chips.push(`⚠️ حساسية: ${profile.allergies}`);
+  if(ageDetails){
+    chips.push('📅 ' + ageDetails.totalDays + ' يوم إجمالي');
+    chips.push('🗓️ ' + ageDetails.totalWeeks + ' أسبوع');
+    chips.push('📆 ' + ageDetails.totalMonths + ' شهر');
+    if(ageDetails.nextMilestone) chips.push('🎯 قادم: ' + ageDetails.nextMilestone.label);
+    if(ageDetails.lastMilestone && ageDetails.lastMilestone.at > 0) chips.push('✅ ' + ageDetails.lastMilestone.label);
+  }
+  if(profile.doctor)   chips.push('👨‍⚕️ ' + profile.doctor);
+  if(profile.hospital) chips.push('🏥 ' + profile.hospital);
+  if(profile.allergies) chips.push('⚠️ حساسية: ' + profile.allergies);
   document.getElementById('profileChips').innerHTML=chips.map(c=>`<div class="p-chip">${c}</div>`).join('');
 
   // Stats
@@ -1444,19 +1540,68 @@ function previewSound(){
 }
 
 function exportData(){
-  const data={medicines,takenLog,reschedOffsets,profile,settings,exportedAt:new Date().toISOString()};
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url;
-  a.download=`followupdose_backup_${dayKey(new Date())}.json`;
-  a.click(); URL.revokeObjectURL(url);
+  const data = {
+    version: 4,
+    exportedAt: new Date().toISOString(),
+    profile, settings,
+    medicines, takenLog, reschedOffsets
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'followupdose_backup_' + dayKey(new Date()) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
   showInfoToast('تم تصدير البيانات ✓');
+}
+
+function triggerImport(){
+  document.getElementById('importFileInput').value = '';
+  document.getElementById('importFileInput').click();
+}
+
+function handleImport(e){
+  const file = e.target.files[0];
+  if(!file){ return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      // Validate it's our backup format
+      if(!data.medicines && !data.profile){
+        alert('الملف غير صالح. يرجى اختيار ملف نسخة احتياطية صحيح.');
+        return;
+      }
+      const medCount = (data.medicines || []).length;
+      if(!confirm('سيتم استبدال جميع البيانات الحالية بالنسخة الاحتياطية\n(' + medCount + ' دواء)\nهل تريد المتابعة؟')){
+        return;
+      }
+      // Restore
+      medicines      = data.medicines      || [];
+      takenLog       = data.takenLog       || {};
+      reschedOffsets = data.reschedOffsets || {};
+      profile        = data.profile        || {};
+      if(data.settings) settings = Object.assign(settings, data.settings);
+      save();
+      renderDay();
+      renderProfile();
+      renderSettings();
+      showInfoToast('تم استيراد ' + medCount + ' دواء بنجاح ✓');
+    } catch(err) {
+      alert('خطأ في قراءة الملف: ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'utf-8');
 }
 
 function confirmClearAll(){
   if(confirm('هل أنت متأكد؟ سيتم حذف جميع البيانات نهائياً!')){
     medicines=[]; takenLog={}; reschedOffsets={};
-    save(); renderDay(); showInfoToast('تم مسح البيانات');
+    save(); renderDay(); renderProfile(); showInfoToast('تم مسح البيانات');
   }
 }
 
