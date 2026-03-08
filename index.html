@@ -3,7 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>مُذكِّر الدواء</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="application-name" content="مُذكِّر الدواء">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="مُذكِّر الدواء">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#00897b">
+  <meta name="msapplication-TileColor" content="#00897b">
+  <meta name="msapplication-TileImage" content="icons/icon-144.png">
+  <meta name="description" content="تطبيق لتذكير مواعيد الأدوية مع جدولة ذكية وتنبيهات تلقائية">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="72x72"  href="icons/icon-72.png">
+  <link rel="apple-touch-icon" sizes="96x96"  href="icons/icon-96.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-startup-image" href="icons/icon-512.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-72.png">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="مُذكِّر الدواء - FollowUpDose">
+  <meta property="og:description" content="تذكير ذكي لمواعيد الأدوية">
+  <meta property="og:image" content="icons/icon-512.png">
+  <meta property="og:type" content="website">
+
+  <title>مُذكِّر الدواء</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -734,5 +769,76 @@ if('Notification'in window&&Notification.permission==='default') Notification.re
 setInterval(checkAlarms,30000); checkAlarms();
 renderDay();
 </script>
+
+<!-- PWA Install Banner -->
+<div id="installBanner" style="
+  display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+  background:linear-gradient(135deg,#00897b,#00b894); color:#fff;
+  border-radius:16px; padding:14px 18px; width:calc(100% - 32px); max-width:400px;
+  box-shadow:0 8px 24px rgba(0,137,123,0.4); z-index:300;
+  align-items:center; gap:12px; font-family:'Cairo',sans-serif; direction:rtl;">
+  <span style="font-size:1.6rem">📲</span>
+  <div style="flex:1">
+    <strong style="display:block;font-size:.95rem">ثبّت التطبيق</strong>
+    <small style="opacity:.85;font-size:.78rem">يعمل بدون إنترنت</small>
+  </div>
+  <button onclick="installApp()" style="background:white;color:#00897b;border:none;border-radius:10px;padding:8px 14px;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">تثبيت</button>
+  <button onclick="this.parentElement.style.display='none'" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.9rem">×</button>
+</div>
+
+<script>
+// ── Service Worker Registration ──────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(reg => {
+        console.log('✅ SW registered:', reg.scope);
+        // Listen for SW messages (e.g. check alarms)
+        navigator.serviceWorker.addEventListener('message', e => {
+          if (e.data && e.data.type === 'CHECK_ALARMS') checkAlarms();
+        });
+        // Try to register periodic background sync
+        if ('periodicSync' in reg) {
+          reg.periodicSync.register('check-alarms', { minInterval: 60 * 60 * 1000 })
+            .catch(() => {});
+        }
+      })
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+// ── PWA Install Prompt ───────────────────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'flex';
+}
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      document.getElementById('installBanner').style.display = 'none';
+    }
+    deferredPrompt = null;
+  });
+}
+
+// Request notification permission on first interaction
+document.addEventListener('click', function askNotif() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  document.removeEventListener('click', askNotif);
+}, { once: true });
+</script>
+
 </body>
 </html>
