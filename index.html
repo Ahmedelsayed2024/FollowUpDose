@@ -320,6 +320,24 @@ select.form-input{appearance:none}
 /* ── SNOOZE OPTIONS in notification toast ── */
 .snooze-opts{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
 .snooze-opt-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:4px 9px;font-family:'Cairo',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer}
+
+/* ── MANAGE SECTION in action modal ── */
+.manage-divider{display:flex;align-items:center;gap:8px;margin:16px 0 12px;color:var(--muted);font-size:.72rem;font-weight:700}
+.manage-divider::before,.manage-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.manage-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.mg-btn{padding:11px 6px;border-radius:12px;border:none;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;transition:all .2s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.mg-btn:active{transform:scale(.96)}
+.mg-btn .mg-icon{font-size:1.3rem}
+.mg-btn.edit-dose{background:var(--primary-pale);color:var(--primary)}
+.mg-btn.edit-time{background:var(--gold-light);color:var(--gold)}
+.mg-btn.del-future{background:#fff3e0;color:#e65100}
+.mg-btn.del-med{background:var(--coral-light);color:var(--coral)}
+.mg-btn.reset-sched{background:var(--green-light);color:var(--green)}
+.mg-btn.edit-full{background:var(--purple-light);color:var(--purple)}
+
+/* ── Quick edit dose modal ── */
+.quick-edit-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.quick-edit-row label{font-size:.8rem;font-weight:700;color:var(--text);white-space:nowrap;min-width:80px}
 </style>
 </head>
 <body>
@@ -767,18 +785,116 @@ select.form-input{appearance:none}
     <div class="modal-handle"></div>
     <h2 id="actionModalTitle">⏱️ تسجيل الجرعة</h2>
     <div id="actionModalBody">
-      <div style="font-size:.82rem;color:var(--muted);margin-bottom:14px" id="actionModalDesc"></div>
+
+      <!-- معلومات الجرعة -->
+      <div style="background:var(--bg);border-radius:12px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <div id="actionMedPic" style="font-size:1.8rem;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:.8rem;color:var(--muted)" id="actionModalDesc"></div>
+        </div>
+      </div>
+
+      <!-- ─── تسجيل أخذ الجرعة ─── -->
+      <div style="font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">تسجيل الجرعة</div>
       <div class="time-action-btns">
-        <button class="ta-btn now" onclick="doTakeNow()">✅ أخذتها الآن<br><small id="nowTimeLabel" style="opacity:.8;font-size:.7rem"></small></button>
-        <button class="ta-btn sched" onclick="doTakeOnSchedule()">📅 أخذتها بالميعاد<br><small id="schedTimeLabel" style="opacity:.8;font-size:.7rem"></small></button>
+        <button class="ta-btn now" onclick="doTakeNow()">✅ أخذتها الآن<br><small id="nowTimeLabel" style="opacity:.85;font-size:.68rem"></small></button>
+        <button class="ta-btn sched" onclick="doTakeOnSchedule()">📅 بالميعاد<br><small id="schedTimeLabel" style="opacity:.85;font-size:.68rem"></small></button>
         <button class="ta-btn custom" onclick="showCustomTime()">🕐 وقت آخر</button>
-        <button class="ta-btn skip" onclick="doSkipDose()">⏭️ تخطي الجرعة</button>
+        <button class="ta-btn skip" onclick="doSkipDose()">⏭️ تخطي</button>
       </div>
       <div class="custom-time-row" id="customTimeRow">
         <input type="time" class="form-input" id="customTimeInput" style="flex:1">
         <button class="submit-btn" style="width:auto;padding:11px 16px;margin-top:0" onclick="doTakeCustom()">تأكيد</button>
       </div>
+
+      <!-- ─── إدارة الدواء ─── -->
+      <div class="manage-divider" style="margin-top:18px">⚙️ إدارة الدواء</div>
+      <div class="manage-btns">
+        <button class="mg-btn edit-dose" onclick="openQuickEditDose()">
+          <span class="mg-icon">💊</span>تعديل الجرعة
+        </button>
+        <button class="mg-btn edit-time" onclick="openQuickEditTime()">
+          <span class="mg-icon">⏰</span>تعديل التوقيت
+        </button>
+        <button class="mg-btn reset-sched" onclick="doResetSchedule()">
+          <span class="mg-icon">🔄</span>إعادة ضبط الجدول
+        </button>
+        <button class="mg-btn del-future" onclick="doDeleteFuture()">
+          <span class="mg-icon">🗓️</span>حذف الجرعات القادمة
+        </button>
+        <button class="mg-btn edit-full" onclick="doOpenFullEdit()">
+          <span class="mg-icon">✏️</span>تعديل كامل
+        </button>
+        <button class="mg-btn del-med" onclick="doDeleteMedicine()">
+          <span class="mg-icon">🗑️</span>حذف الدواء نهائياً
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- ═══ QUICK EDIT DOSE MODAL ═══ -->
+<div class="modal-overlay" id="quickDoseModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="quickDoseTitle">💊 تعديل الجرعة</h2>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:16px" id="quickDoseDesc"></div>
+
+    <div class="quick-edit-row">
+      <label>الكمية</label>
+      <input type="number" class="form-input" id="qDoseAmt" min="0" step="0.5" style="flex:1">
+      <select class="form-input" id="qDoseUnit" style="flex:1;margin-right:6px">
+        <option value="مل">مل</option>
+        <option value="حبة">حبة</option>
+        <option value="قطرة">قطرة</option>
+        <option value="كبسول">كبسول</option>
+        <option value="ملعقة">ملعقة</option>
+        <option value="مغ">ملجم</option>
+      </select>
+    </div>
+    <div class="quick-edit-row">
+      <label>التكرار</label>
+      <select class="form-input" id="qInterval" style="flex:1">
+        <option value="1">كل ساعة</option>
+        <option value="2">كل 2 ساعة</option>
+        <option value="3">كل 3 ساعات</option>
+        <option value="4">كل 4 ساعات</option>
+        <option value="6">كل 6 ساعات</option>
+        <option value="8">كل 8 ساعات</option>
+        <option value="12">كل 12 ساعة</option>
+        <option value="24">مرة يومياً</option>
+      </select>
+    </div>
+    <div class="quick-edit-row">
+      <label>ملاحظات</label>
+      <input type="text" class="form-input" id="qNotes" placeholder="مثال: بعد الأكل" style="flex:1">
+    </div>
+    <button class="submit-btn" onclick="saveQuickEditDose()">💾 حفظ التعديلات</button>
+  </div>
+</div>
+
+<!-- ═══ QUICK EDIT TIME MODAL ═══ -->
+<div class="modal-overlay" id="quickTimeModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="quickTimeTitle">⏰ تعديل التوقيت</h2>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:16px" id="quickTimeDesc"></div>
+
+    <div class="quick-edit-row">
+      <label>وقت أول جرعة</label>
+      <input type="time" class="form-input" id="qStartTime" style="flex:1">
+    </div>
+
+    <div style="background:var(--primary-pale);border-radius:12px;padding:12px;margin:12px 0;font-size:.78rem;color:var(--primary)">
+      <strong>📌 ملاحظة:</strong> تعديل التوقيت سيُعيد ضبط جدول جميع الجرعات القادمة من الآن.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <button class="ta-btn custom" style="padding:10px" onclick="setTimeNow()">🕐 ابدأ من الآن</button>
+      <button class="ta-btn sched" style="padding:10px" onclick="setTimeOriginal()">📅 الوقت الأصلي</button>
+    </div>
+
+    <button class="submit-btn" onclick="saveQuickEditTime()">💾 تطبيق التوقيت الجديد</button>
   </div>
 </div>
 
@@ -1177,14 +1293,25 @@ function openDoseAction(medId,time,dk,h,m){
   const doseDisplay=med.doseAmt?`${med.doseAmt} ${med.doseUnit||'مل'}`:(med.dose||'');
   const key=takenKey(medId,dk,time), taken=takenLog[key];
 
-  document.getElementById('actionModalTitle').textContent=(med.cat?getCatIcon(med.cat):med.icon||'💊')+' '+med.name;
-  document.getElementById('actionModalDesc').innerHTML=
-    `الجرعة: <strong>${doseDisplay||'—'}</strong> &nbsp;|&nbsp; الميعاد: <strong>${fmt12(time,false)}</strong>`+
-    (taken?'<br><span style="color:var(--teal);font-weight:700">✅ تم أخذها</span>':'');
-  document.getElementById('nowTimeLabel').textContent=fmt12(nowStr,false);
-  document.getElementById('schedTimeLabel').textContent=fmt12(time,false);
+  const medIcon = med.cat ? getCatIcon(med.cat) : (med.icon||'💊');
+  document.getElementById('actionModalTitle').textContent = medIcon + ' ' + med.name;
+
+  // Med pic or icon
+  const picEl = document.getElementById('actionMedPic');
+  if(med.photo){
+    picEl.innerHTML = `<img src="${med.photo}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;border:2px solid var(--border)">`;
+  } else {
+    picEl.textContent = medIcon;
+  }
+
+  document.getElementById('actionModalDesc').innerHTML =
+    `<strong style="font-size:.9rem;color:var(--text)">${med.name}</strong><br>`+
+    `الجرعة: <strong style="color:var(--primary)">${doseDisplay||'—'}</strong> &nbsp;·&nbsp; الميعاد: <strong style="color:var(--primary)">${fmt12(time,false)}</strong>`+
+    (taken?'<br><span style="color:var(--teal);font-weight:700;font-size:.8rem">✅ تم أخذها مسبقاً</span>':'');
+  document.getElementById('nowTimeLabel').textContent = fmt12(nowStr,false);
+  document.getElementById('schedTimeLabel').textContent = fmt12(time,false);
   document.getElementById('customTimeRow').classList.remove('show');
-  document.getElementById('customTimeInput').value=nowStr;
+  document.getElementById('customTimeInput').value = nowStr;
   document.getElementById('doseActionModal').classList.add('open');
 }
 
@@ -1244,6 +1371,116 @@ function doSkipDose(){
   const key=takenKey(medId,dk,time);
   takenLog[key]={ts:Date.now(),skipped:true,delta:0};
   save(); renderDay(); closeAllModals(); showInfoToast('تم تخطي الجرعة');
+}
+
+// ── MANAGE ACTIONS ────────────────────────────────────────────────────────
+
+function openQuickEditDose(){
+  if(!_pendingAction) return;
+  const med=medicines.find(m=>m.id===_pendingAction.medId); if(!med) return;
+  document.getElementById('quickDoseTitle').textContent=(med.cat?getCatIcon(med.cat):'💊')+' '+med.name;
+  document.getElementById('quickDoseDesc').textContent='تعديل الجرعة والتكرار';
+  document.getElementById('qDoseAmt').value=med.doseAmt||'';
+  document.getElementById('qDoseUnit').value=med.doseUnit||'مل';
+  document.getElementById('qInterval').value=med.interval||6;
+  document.getElementById('qNotes').value=med.notes||'';
+  document.getElementById('quickDoseModal').classList.add('open');
+}
+
+function saveQuickEditDose(){
+  if(!_pendingAction) return;
+  const idx=medicines.findIndex(m=>m.id===_pendingAction.medId);
+  if(idx===-1) return;
+  const doseAmt=parseFloat(document.getElementById('qDoseAmt').value)||0;
+  const doseUnit=document.getElementById('qDoseUnit').value;
+  medicines[idx]=Object.assign({},medicines[idx],{
+    doseAmt: doseAmt||null,
+    doseUnit,
+    dose: doseAmt?(doseAmt+' '+doseUnit):'',
+    interval: parseInt(document.getElementById('qInterval').value)||6,
+    notes: document.getElementById('qNotes').value.trim()
+  });
+  save(); renderDay(); closeAllModals();
+  showInfoToast('تم تحديث الجرعة ✓');
+}
+
+function openQuickEditTime(){
+  if(!_pendingAction) return;
+  const med=medicines.find(m=>m.id===_pendingAction.medId); if(!med) return;
+  document.getElementById('quickTimeTitle').textContent=(med.cat?getCatIcon(med.cat):'⏰')+' '+med.name;
+  document.getElementById('quickTimeDesc').textContent='الوقت الحالي: '+fmt12(med.startTime||'08:00',false);
+  // Show effective start time (with offset applied)
+  const baseOffset=reschedOffsets[med.id]||0;
+  const [sh,sm]=( med.startTime||'08:00' ).split(':').map(Number);
+  const effMin=(sh*60+sm+baseOffset+1440)%1440;
+  const effH=Math.floor(effMin/60), effM=effMin%60;
+  document.getElementById('qStartTime').value=pad(effH)+':'+pad(effM);
+  document.getElementById('quickTimeModal').classList.add('open');
+}
+
+function setTimeNow(){
+  const n=new Date();
+  document.getElementById('qStartTime').value=pad(n.getHours())+':'+pad(n.getMinutes());
+}
+
+function setTimeOriginal(){
+  if(!_pendingAction) return;
+  const med=medicines.find(m=>m.id===_pendingAction.medId); if(!med) return;
+  document.getElementById('qStartTime').value=med.startTime||'08:00';
+}
+
+function saveQuickEditTime(){
+  if(!_pendingAction) return;
+  const idx=medicines.findIndex(m=>m.id===_pendingAction.medId);
+  if(idx===-1) return;
+  const newTime=document.getElementById('qStartTime').value;
+  if(!newTime) return;
+  // Update startTime and clear reschedule offset (new baseline)
+  medicines[idx]=Object.assign({},medicines[idx],{startTime:newTime});
+  reschedOffsets[_pendingAction.medId]=0;
+  save(); renderDay(); closeAllModals();
+  showInfoToast('تم تحديث توقيت الجرعات القادمة ✓');
+}
+
+function doResetSchedule(){
+  if(!_pendingAction) return;
+  const med=medicines.find(m=>m.id===_pendingAction.medId); if(!med) return;
+  if(!confirm('إعادة ضبط الجدول للتوقيت الأصلي: '+fmt12(med.startTime||'08:00',false)+'؟')) return;
+  reschedOffsets[_pendingAction.medId]=0;
+  save(); renderDay(); closeAllModals();
+  showInfoToast('تم إعادة ضبط الجدول ✓');
+}
+
+function doDeleteFuture(){
+  if(!_pendingAction) return;
+  const med=medicines.find(m=>m.id===_pendingAction.medId); if(!med) return;
+  if(!confirm('حذف جميع الجرعات القادمة لـ "'+med.name+'" من اليوم فصاعداً?')) return;
+  // Set end date to yesterday
+  const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const idx=medicines.findIndex(m=>m.id===_pendingAction.medId);
+  medicines[idx]=Object.assign({},medicines[idx],{
+    duration: Math.max(1, Math.floor((yesterday - new Date(medicines[idx].startDate+'T00:00:00'))/(1000*60*60*24))+1)
+  });
+  save(); renderDay(); closeAllModals();
+  showInfoToast('تم حذف الجرعات القادمة');
+}
+
+function doOpenFullEdit(){
+  if(!_pendingAction) return;
+  closeAllModals();
+  setTimeout(()=>openEditModal(_pendingAction.medId),200);
+}
+
+function doDeleteMedicine(){
+  if(!_pendingAction) return;
+  const med=medicines.find(m=>m.id===_pendingAction.medId); if(!med) return;
+  if(!confirm('حذف دواء "'+med.name+'" وجميع سجلاته نهائياً؟')) return;
+  medicines=medicines.filter(m=>m.id!==_pendingAction.medId);
+  delete reschedOffsets[_pendingAction.medId];
+  // Remove taken log entries for this med
+  Object.keys(takenLog).forEach(k=>{ if(k.startsWith(_pendingAction.medId+'__')) delete takenLog[k]; });
+  save(); renderDay(); closeAllModals();
+  showInfoToast('تم حذف الدواء نهائياً 🗑️');
 }
 
 function openDoseDetail(medId,time,dk){
