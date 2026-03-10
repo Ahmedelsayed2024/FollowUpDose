@@ -349,6 +349,38 @@ select.form-input{appearance:none}
 /* ── Quick edit dose modal ── */
 .quick-edit-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .quick-edit-row label{font-size:.8rem;font-weight:700;color:var(--text);white-space:nowrap;min-width:80px}
+
+/* ── MEDICINE DETAIL PAGE ── */
+.med-detail-header{background:linear-gradient(135deg,#0d2137 0%,var(--primary) 60%,var(--primary-light) 100%);padding:48px 20px 20px;color:#fff;position:sticky;top:0;z-index:100}
+.med-detail-header h1{font-size:1.3rem;font-weight:900}
+.med-hero-card{background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:var(--radius);padding:20px;margin-bottom:14px;color:#fff;display:flex;gap:14px;align-items:center}
+.med-hero-pic{width:80px;height:80px;border-radius:16px;object-fit:cover;border:3px solid rgba(255,255,255,.4);flex-shrink:0;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+.med-hero-info .med-hero-name{font-size:1.2rem;font-weight:900;margin-bottom:4px}
+.med-hero-info .med-hero-sub{font-size:.75rem;opacity:.85}
+.med-qty-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.med-qty-card{background:#fff;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:var(--shadow)}
+.med-qty-num{font-size:1.4rem;font-weight:900;color:var(--primary)}
+.med-qty-lbl{font-size:.62rem;color:var(--muted);font-weight:600;margin-top:2px}
+.med-qty-unit{font-size:.7rem;color:var(--primary-light);font-weight:700}
+.info-row{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-row-label{font-size:.78rem;color:var(--muted);font-weight:600}
+.info-row-value{font-size:.85rem;font-weight:700;color:var(--text)}
+/* ── CHANGE LOG ── */
+.log-entry{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,.05);border-right:4px solid var(--border)}
+.log-entry.log-taken{border-right-color:var(--teal)}
+.log-entry.log-skipped{border-right-color:var(--gold)}
+.log-entry.log-timeChange{border-right-color:var(--purple)}
+.log-entry.log-doseChange{border-right-color:var(--primary)}
+.log-entry.log-added{border-right-color:var(--green)}
+.log-entry.log-deleted{border-right-color:var(--coral)}
+.log-time{font-size:.68rem;color:var(--muted);font-weight:600}
+.log-desc{font-size:.82rem;font-weight:700;color:var(--text);margin-top:2px}
+.log-detail{font-size:.72rem;color:var(--muted);margin-top:2px}
+/* ── TOTAL QTY BADGE ── */
+.total-qty-box{background:linear-gradient(135deg,var(--teal),var(--teal-dark));border-radius:14px;padding:14px 16px;margin-bottom:14px;color:#fff}
+.total-qty-main{font-size:1.8rem;font-weight:900;line-height:1}
+.total-qty-sub{font-size:.72rem;opacity:.85;margin-top:3px}
 </style>
 </head>
 <body>
@@ -659,9 +691,48 @@ select.form-input{appearance:none}
       </div>
     </div>
 
-    <div style="text-align:center;padding:16px;color:var(--muted);font-size:.72rem">
-      مُذكِّر الدواء v2.0 · متوافق مع iOS & Android
+    <div class="settings-section">
+      <div class="settings-section-title">📜 سجل التغييرات الكامل</div>
+      <div class="settings-row" onclick="var p=document.getElementById('fullLogPanel');p.style.display=p.style.display==='none'?'block':'none';renderFullChangeLog()">
+        <div class="settings-row-icon" style="background:#e8f5e9">📜</div>
+        <div class="settings-row-info">
+          <div class="settings-row-title">سجل جميع الجرعات والتغييرات</div>
+          <div class="settings-row-sub">تاريخ كامل لكل الأدوية</div>
+        </div>
+        <div class="settings-row-action">›</div>
+      </div>
+      <div id="fullLogPanel" style="display:none;padding:12px 16px;max-height:400px;overflow-y:auto">
+        <div id="fullChangeLog"></div>
+      </div>
+      <div class="settings-row" onclick="exportChangeLog()">
+        <div class="settings-row-icon" style="background:#fff3e0">📤</div>
+        <div class="settings-row-info">
+          <div class="settings-row-title">تصدير السجل</div>
+          <div class="settings-row-sub">حفظ سجل التغييرات JSON</div>
+        </div>
+        <div class="settings-row-action">›</div>
+      </div>
     </div>
+    <div style="text-align:center;padding:16px;color:var(--muted);font-size:.72rem">
+      مُذكِّر الدواء v3.0 · متوافق مع iOS & Android
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ PAGE: MEDICINE DETAIL ═══ -->
+<div class="page" id="pageMedDetail">
+  <div class="med-detail-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button onclick="navigateTo('pageHome')" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:36px;height:36px;font-size:1.1rem;cursor:pointer">‹</button>
+      <div>
+        <h1 id="medDetailTitle">تفاصيل الدواء</h1>
+        <div style="font-size:.7rem;opacity:.8;margin-top:2px" id="medDetailSub"></div>
+      </div>
+    </div>
+  </div>
+  <div class="content" style="padding-top:14px">
+    <div id="medDetailBody"></div>
   </div>
 </div>
 
@@ -1013,6 +1084,7 @@ let medicines     = JSON.parse(localStorage.getItem('meds_v4') || '[]');
 let takenLog      = JSON.parse(localStorage.getItem('taken_v4') || '{}');
 let reschedOffsets= JSON.parse(localStorage.getItem('resched_v4') || '{}');
 let profile       = JSON.parse(localStorage.getItem('profile_v4') || '{}');
+let changeLog     = JSON.parse(localStorage.getItem('changelog_v1') || '[]');
 let settings      = JSON.parse(localStorage.getItem('settings_v4') || JSON.stringify({
   notifEnabled: true, vibrationEnabled: true, snoozeEnabled: true,
   alarmSound: 'beep'
@@ -1039,6 +1111,7 @@ const save = () => {
   localStorage.setItem('profile_v4', JSON.stringify(profile));
   localStorage.setItem('settings_v4', JSON.stringify(settings));
 };
+const saveLog = () => { localStorage.setItem('changelog_v1', JSON.stringify(changeLog)); };
 
 // ══════════════════════════════════════════
 //  HELPERS
@@ -1137,7 +1210,8 @@ setInterval(updateClock,1000); updateClock();
 // ══════════════════════════════════════════
 const pageNavMap = {
   'pageHome':'navHome','pageProfile':'navProfile',
-  'pageStats':'navStats','pageNewborn':'navNewborn','pageSettings':'navSettings'
+  'pageStats':'navStats','pageNewborn':'navNewborn','pageSettings':'navSettings',
+  'pageMedDetail':'navHome'
 };
 
 function navigateTo(pageId) {
@@ -1147,6 +1221,7 @@ function navigateTo(pageId) {
   const navId = pageNavMap[pageId];
   if(navId) document.getElementById(navId).classList.add('active');
   if(pageId==='pageStats') renderStats();
+  if(pageId==='pageMedDetail') { /* rendered on demand */ }
   if(pageId==='pageProfile') renderProfile();
   if(pageId==='pageNewborn') renderNewbornInfo();
   if(pageId==='pageSettings') renderSettings();
@@ -1162,11 +1237,30 @@ const getDosesForDay = (med, date) => {
   const medEnd   = new Date(medStart);
   medEnd.setDate(medEnd.getDate() + (med.duration===999 ? 3650 : med.duration-1));
   if (dk < dayKey(medStart) || dk > dayKey(medEnd)) return [];
-  const [sh,sm] = med.startTime.split(':').map(Number);
-  const baseOffset = reschedOffsets[med.id] || 0;
+
+  // Pick the correct startTime for this day (respects time history)
+  let useTime = med.startTime || '08:00';
+  let useOffset = reschedOffsets[med.id] || 0;
+  if (med.timeHistory && med.timeChangedAt && dk < med.timeChangedAt) {
+    // This day is BEFORE the time change — use historical time
+    const hist = med.timeHistory;
+    for (let i = hist.length-1; i >= 0; i--) {
+      if (!hist[i].until || dk < hist[i].until) {
+        useTime   = hist[i].time;
+        useOffset = hist[i].offset || 0;
+        break;
+      }
+    }
+    if (hist.length > 0 && dk < hist[0].until) {
+      useTime   = hist[0].time;
+      useOffset = hist[0].offset || 0;
+    }
+  }
+
+  const [sh,sm] = useTime.split(':').map(Number);
   const startDT = new Date(medStart);
   startDT.setHours(sh,sm,0,0);
-  startDT.setMinutes(startDT.getMinutes() + baseOffset);
+  startDT.setMinutes(startDT.getMinutes() + useOffset);
   const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
   const dayEnd   = new Date(date); dayEnd.setHours(23,59,59,999);
   let cursor = new Date(startDT);
@@ -1174,7 +1268,7 @@ const getDosesForDay = (med, date) => {
   while (cursor < dayStart) cursor = new Date(cursor.getTime() + intervalMs);
   const doses = [];
   while (cursor <= dayEnd) {
-    doses.push({ time:fmtT(cursor.getHours(),cursor.getMinutes()), h:cursor.getHours(), m:cursor.getMinutes(), isRescheduled:baseOffset!==0 });
+    doses.push({ time:fmtT(cursor.getHours(),cursor.getMinutes()), h:cursor.getHours(), m:cursor.getMinutes(), isRescheduled:useOffset!==0 });
     cursor = new Date(cursor.getTime() + intervalMs);
   }
   return doses;
@@ -1477,11 +1571,32 @@ function saveQuickEditTime(){
   if(idx===-1) return;
   const newTime=document.getElementById('qStartTime').value;
   if(!newTime) return;
-  // Update startTime and clear reschedule offset (new baseline)
-  medicines[idx]=Object.assign({},medicines[idx],{startTime:newTime});
+  const med = medicines[idx];
+
+  // Save a snapshot of past taken-log BEFORE changing time
+  // so history is preserved correctly.
+  // New startTime only affects FUTURE dose calculations.
+  // We do this by keeping old startTime in a history array,
+  // and using a timeChangeDate so getDosesForDay knows which to use.
+  const today = dayKey(new Date());
+  const hist = med.timeHistory || [];
+  if(med.startTime){
+    hist.push({time: med.startTime, offset: reschedOffsets[med.id]||0, until: today});
+  }
+
+  medicines[idx]=Object.assign({},medicines[idx],{
+    startTime: newTime,
+    timeHistory: hist,
+    timeChangedAt: today
+  });
   reschedOffsets[_pendingAction.medId]=0;
+
+  // Log the change
+  addChangeLog(med.id, med.name, 'timeChange',
+    {from: med.startTime, to: newTime, offset: reschedOffsets[med.id]||0});
+
   save(); renderDay(); closeAllModals();
-  showInfoToast('تم تحديث توقيت الجرعات القادمة ✓');
+  showInfoToast('تم تحديث توقيت الجرعات القادمة فقط ✓');
 }
 
 function doResetSchedule(){
@@ -2408,6 +2523,340 @@ renderDay();
 renderProfile();
 renderNewbornInfo();
 renderSettings();
+
+// ═══════════════════════════════════════════════════════════════════
+//  CHANGE LOG SYSTEM  (full audit trail for health app)
+// ═══════════════════════════════════════════════════════════════════
+// changeLog declared at top — saveLog() defined near save()
+
+function addChangeLog(medId, medName, type, details){
+  const entry = {
+    id:      Date.now().toString(36) + Math.random().toString(36).slice(2),
+    medId,
+    medName,
+    type,    // 'taken'|'skipped'|'timeChange'|'doseChange'|'added'|'deleted'|'edited'
+    details,
+    ts:      Date.now(),
+    date:    dayKey(new Date()),
+    time:    fmtT(new Date().getHours(), new Date().getMinutes())
+  };
+  changeLog.unshift(entry);   // newest first
+  if(changeLog.length > 2000) changeLog = changeLog.slice(0, 2000); // cap at 2000
+  saveLog();
+}
+
+// Patch saveMedicine to log add/edit
+const _origSaveMed = saveMedicine;
+saveMedicine = function(){
+  const wasEditing = editingMedId;
+  const medName = document.getElementById('medName').value.trim();
+  _origSaveMed();
+  const med = medicines.find(m => m.name === medName);
+  if(med){
+    addChangeLog(med.id, med.name, wasEditing ? 'edited' : 'added', {
+      dose: med.doseAmt ? (med.doseAmt + ' ' + (med.doseUnit||'مل')) : '',
+      interval: med.interval,
+      startTime: med.startTime,
+      duration: med.duration
+    });
+  }
+};
+
+// Patch _applyTakeAtTime to log taken
+const _origApplyTake = _applyTakeAtTime;
+_applyTakeAtTime = function(medId, dk, time, schedH, schedM, actualDate){
+  _origApplyTake(medId, dk, time, schedH, schedM, actualDate);
+  const med = medicines.find(m => m.id === medId);
+  if(med){
+    const doseDisplay = med.doseAmt ? (med.doseAmt + ' ' + (med.doseUnit||'مل')) : '';
+    addChangeLog(medId, med.name, 'taken', {
+      date: dk, scheduledTime: time,
+      actualTime: fmtT(actualDate.getHours(), actualDate.getMinutes()),
+      dose: doseDisplay
+    });
+  }
+};
+
+// Patch doSkipDose to log skip
+const _origSkip = doSkipDose;
+doSkipDose = function(){
+  if(_pendingAction){
+    const med = medicines.find(m => m.id === _pendingAction.medId);
+    if(med) addChangeLog(med.id, med.name, 'skipped', {
+      date: _pendingAction.dk, time: _pendingAction.time
+    });
+  }
+  _origSkip();
+};
+
+// Patch doDeleteMedicine to log deletion
+const _origDelMed = doDeleteMedicine;
+doDeleteMedicine = function(){
+  if(_pendingAction){
+    const med = medicines.find(m => m.id === _pendingAction.medId);
+    if(med) addChangeLog(med.id, med.name, 'deleted', {});
+  }
+  _origDelMed();
+};
+
+// Patch saveQuickEditDose to log dose change
+const _origSaveDose = saveQuickEditDose;
+saveQuickEditDose = function(){
+  if(_pendingAction){
+    const med = medicines.find(m => m.id === _pendingAction.medId);
+    const oldDose = med ? (med.doseAmt + ' ' + (med.doseUnit||'مل')) : '';
+    const newAmt  = document.getElementById('qDoseAmt').value;
+    const newUnit = document.getElementById('qDoseUnit').value;
+    _origSaveDose();
+    if(med) addChangeLog(med.id, med.name, 'doseChange', {
+      from: oldDose, to: (newAmt + ' ' + newUnit),
+      interval: document.getElementById('qInterval').value
+    });
+  } else { _origSaveDose(); }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  MEDICINE DETAIL PAGE
+// ═══════════════════════════════════════════════════════════════════
+function openMedDetail(medId){
+  const med = medicines.find(m => m.id === medId);
+  if(!med) return;
+
+  document.getElementById('medDetailTitle').textContent = med.name;
+  document.getElementById('medDetailSub').textContent =
+    (med.cat ? getCatLabel(med.cat) : '') + (med.startDate ? ' · بدأ ' + med.startDate : '');
+
+  // ── Calculate total quantity statistics ──────────────────────────
+  const medStart  = new Date(med.startDate + 'T00:00:00');
+  const today     = new Date();
+  const medEnd    = new Date(medStart);
+  medEnd.setDate(medEnd.getDate() + (med.duration === 999 ? 3650 : med.duration - 1));
+  const effectiveEnd = medEnd < today ? medEnd : today;
+
+  let totalDoses = 0, takenDoses = 0, skippedDoses = 0;
+  let totalQty = 0;
+
+  const d = new Date(medStart);
+  while(d <= effectiveEnd){
+    const dk2 = dayKey(d);
+    const doses = getDosesForDay(med, d);
+    doses.forEach(dose => {
+      totalDoses++;
+      const k = takenKey(med.id, dk2, dose.time);
+      const entry = takenLog[k];
+      if(entry && !entry.skipped){ takenDoses++; totalQty += (med.doseAmt || 0); }
+      else if(entry && entry.skipped) skippedDoses++;
+    });
+    d.setDate(d.getDate() + 1);
+  }
+
+  // Future doses
+  const doseAmt = med.doseAmt || 0;
+  const doseUnit = med.doseUnit || 'مل';
+  const remStart = new Date(today); remStart.setDate(remStart.getDate() + 1);
+  let futureDoses = 0, futureQty = 0;
+  const d2 = new Date(remStart);
+  while(d2 <= medEnd){
+    const doses2 = getDosesForDay(med, d2);
+    futureDoses += doses2.length;
+    futureQty   += doses2.length * doseAmt;
+    d2.setDate(d2.getDate() + 1);
+  }
+
+  const adherencePct = totalDoses ? Math.round(takenDoses/totalDoses*100) : 0;
+  const doseIcon = med.cat ? getCatIcon(med.cat) : (med.icon || '💊');
+
+  // ── Medicine log entries for this med ─────────────────────────────
+  const medLogs = changeLog.filter(e => e.medId === medId).slice(0, 50);
+
+  // ── Render ────────────────────────────────────────────────────────
+  const picHtml = med.photo
+    ? `<img src="${med.photo}" style="width:80px;height:80px;object-fit:cover;border-radius:16px;border:3px solid rgba(255,255,255,.4)">`
+    : `<div class="med-hero-pic">${doseIcon}</div>`;
+
+  const doseDisplay = doseAmt ? (doseAmt + ' ' + doseUnit) : 'غير محدد';
+
+  document.getElementById('medDetailBody').innerHTML = `
+
+    <!-- Hero -->
+    <div class="med-hero-card">
+      ${picHtml}
+      <div class="med-hero-info" style="flex:1">
+        <div class="med-hero-name">${med.name}</div>
+        <div class="med-hero-sub">
+          ${med.cat ? getCatLabel(med.cat) : ''} · كل ${med.interval} ساعة<br>
+          ${med.startDate} ${med.duration===999?'(مستمر)':'→ '+dayKey(medEnd)}
+        </div>
+        <div style="margin-top:8px">
+          <span style="background:rgba(255,255,255,.25);border-radius:8px;padding:4px 10px;font-size:.72rem;font-weight:700">
+            ${adherencePct}% التزام
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total quantity taken -->
+    <div class="total-qty-box">
+      <div style="font-size:.72rem;font-weight:700;opacity:.85;margin-bottom:6px">📦 إجمالي ما تم أخذه</div>
+      <div class="total-qty-main">${doseAmt ? totalQty.toFixed(1) + ' ' + doseUnit : takenDoses + ' جرعة'}</div>
+      <div class="total-qty-sub">من أصل ${doseAmt ? (totalDoses * doseAmt).toFixed(1) + ' ' + doseUnit : totalDoses + ' جرعة'} إجمالية</div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="med-qty-grid">
+      <div class="med-qty-card">
+        <div class="med-qty-num" style="color:var(--teal)">${takenDoses}</div>
+        <div class="med-qty-unit">${doseAmt ? (takenDoses*doseAmt).toFixed(1)+' '+doseUnit : ''}</div>
+        <div class="med-qty-lbl">✅ جرعات أُخذت</div>
+      </div>
+      <div class="med-qty-card">
+        <div class="med-qty-num" style="color:var(--coral)">${totalDoses - takenDoses - skippedDoses}</div>
+        <div class="med-qty-unit">${doseAmt ? ((totalDoses-takenDoses-skippedDoses)*doseAmt).toFixed(1)+' '+doseUnit : ''}</div>
+        <div class="med-qty-lbl">❌ فائتة</div>
+      </div>
+      <div class="med-qty-card">
+        <div class="med-qty-num" style="color:var(--gold)">${skippedDoses}</div>
+        <div class="med-qty-lbl">⏭️ تخطي</div>
+      </div>
+      <div class="med-qty-card">
+        <div class="med-qty-num" style="color:var(--primary)">${futureDoses}</div>
+        <div class="med-qty-unit">${doseAmt ? futureQty.toFixed(1)+' '+doseUnit : ''}</div>
+        <div class="med-qty-lbl">⏳ متبقية</div>
+      </div>
+      <div class="med-qty-card">
+        <div class="med-qty-num" style="color:var(--purple)">${totalDoses}</div>
+        <div class="med-qty-unit">${doseAmt ? (totalDoses*doseAmt).toFixed(1)+' '+doseUnit : ''}</div>
+        <div class="med-qty-lbl">💊 إجمالي الجرعات</div>
+      </div>
+      <div class="med-qty-card">
+        <div class="med-qty-num" style="color:var(--green)">${adherencePct}%</div>
+        <div class="med-qty-lbl">📊 الالتزام</div>
+      </div>
+    </div>
+
+    <!-- Medicine info -->
+    <div class="chart-card" style="padding:0;overflow:hidden;margin-bottom:14px">
+      <div style="padding:12px 16px;font-size:.8rem;font-weight:700;border-bottom:1px solid var(--border)">📋 معلومات الدواء</div>
+      <div class="info-row"><span class="info-row-label">الجرعة</span><span class="info-row-value">${doseDisplay}</span></div>
+      <div class="info-row"><span class="info-row-label">التكرار</span><span class="info-row-value">كل ${med.interval} ساعة</span></div>
+      <div class="info-row"><span class="info-row-label">وقت البدء</span><span class="info-row-value">${med.startTime||'--'}</span></div>
+      <div class="info-row"><span class="info-row-label">تاريخ البدء</span><span class="info-row-value">${med.startDate||'--'}</span></div>
+      <div class="info-row"><span class="info-row-label">المدة</span><span class="info-row-value">${med.duration===999?'مستمر':med.duration+' يوم'}</span></div>
+      ${med.notes?`<div class="info-row"><span class="info-row-label">ملاحظات</span><span class="info-row-value">${med.notes}</span></div>`:''}
+      ${med.cat?`<div class="info-row"><span class="info-row-label">التصنيف</span><span class="info-row-value">${getCatIcon(med.cat)} ${getCatLabel(med.cat)}</span></div>`:''}
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <button onclick="_pendingAction={medId:'${medId}',dk:dayKey(new Date()),time:'00:00',h:0,m:0};openQuickEditDose()" style="background:var(--primary-pale);border:none;color:var(--primary);border-radius:12px;padding:12px;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">
+        💊 تعديل الجرعة
+      </button>
+      <button onclick="openEditModal('${medId}')" style="background:var(--purple-light);border:none;color:var(--purple);border-radius:12px;padding:12px;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">
+        ✏️ تعديل كامل
+      </button>
+    </div>
+
+    <!-- Change log -->
+    <div class="sec-title"><span></span> سجل التغييرات والجرعات</div>
+    ${medLogs.length ? medLogs.map(e => renderLogEntry(e)).join('') :
+      '<div class="empty-state" style="padding:20px"><p style="color:var(--muted)">لا توجد سجلات بعد</p></div>'
+    }
+
+    <!-- Full log link -->
+    ${medLogs.length >= 50 ? '<div style="text-align:center;padding:8px"><button onclick="navigateTo(\'pageSettings\')" style="background:none;border:none;color:var(--primary);font-family:\'Cairo\',sans-serif;font-size:.8rem;cursor:pointer">عرض السجل الكامل في الإعدادات ›</button></div>' : ''}
+  `;
+
+  navigateTo('pageMedDetail');
+}
+
+const _logTypeMap = {
+  taken:      {icon:'✅', label:'تم أخذ الجرعة',     cls:'log-taken'},
+  skipped:    {icon:'⏭️', label:'تم تخطي الجرعة',    cls:'log-skipped'},
+  timeChange: {icon:'⏰', label:'تغيير وقت الجرعة',  cls:'log-timeChange'},
+  doseChange: {icon:'💊', label:'تغيير مقدار الجرعة', cls:'log-doseChange'},
+  added:      {icon:'➕', label:'إضافة الدواء',        cls:'log-added'},
+  edited:     {icon:'✏️', label:'تعديل الدواء',        cls:'log-edited'},
+  deleted:    {icon:'🗑️', label:'حذف الدواء',          cls:'log-deleted'},
+};
+
+function renderLogEntry(e){
+  const t = _logTypeMap[e.type] || {icon:'📝', label:e.type, cls:''};
+  const d = e.details || {};
+  let detail = '';
+  if(e.type==='taken')      detail = `الموعد: ${e.details.scheduledTime||''} · أُخذت: ${e.details.actualTime||''} ${e.details.dose ? '· '+e.details.dose : ''}`;
+  if(e.type==='skipped')    detail = `الموعد: ${e.details.time||''} · التاريخ: ${e.details.date||''}`;
+  if(e.type==='timeChange') detail = `من: ${e.details.from||''} → إلى: ${e.details.to||''}`;
+  if(e.type==='doseChange') detail = `من: ${e.details.from||''} → إلى: ${e.details.to||''} كل ${e.details.interval||'?'} ساعة`;
+  if(e.type==='added')      detail = `${e.details.dose||''} كل ${e.details.interval||'?'} ساعة`;
+  if(e.type==='edited')     detail = `${e.details.dose||''} كل ${e.details.interval||'?'} ساعة`;
+  const dateStr = new Date(e.ts).toLocaleDateString('ar-EG', {year:'numeric',month:'short',day:'numeric'});
+  return `<div class="log-entry ${t.cls}">
+    <div class="log-time">${t.icon} ${dateStr} ${e.time||''}</div>
+    <div class="log-desc">${t.label} — ${e.medName}</div>
+    ${detail ? `<div class="log-detail">${detail}</div>` : ''}
+  </div>`;
+}
+
+// ── Full change log in Settings ───────────────────────────────────────────
+function renderFullChangeLog(){
+  const container = document.getElementById('fullChangeLog');
+  if(!container) return;
+  if(!changeLog.length){
+    container.innerHTML = '<div class="empty-state" style="padding:16px"><p style="color:var(--muted)">لا توجد سجلات</p></div>';
+    return;
+  }
+  container.innerHTML = changeLog.slice(0,200).map(e => renderLogEntry(e)).join('');
+}
+
+function exportChangeLog(){
+  const json=JSON.stringify(changeLog,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='changelog_'+dayKey(new Date())+'.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showInfoToast('تم تصدير السجل ✓');
+}
+
+function renderFullChangeLog(){
+  const container=document.getElementById('fullChangeLog'); if(!container) return;
+  if(!changeLog.length){ container.innerHTML='<p style="color:var(--muted);text-align:center;padding:16px">لا توجد سجلات</p>'; return; }
+  container.innerHTML=changeLog.slice(0,200).map(e=>renderLogEntry(e)).join('');
+}
+
+// ── Open medicine detail from profile meds list ────────────────────────
+const _origRenderProfile = renderProfile;
+renderProfile = function(){
+  _origRenderProfile();
+  // Make profile med rows clickable to detail page
+  document.querySelectorAll('#profileMedsList .week-med-row').forEach((row, i) => {
+    const med = medicines[i];
+    if(med){
+      row.style.cursor = 'pointer';
+      row.onclick = () => openMedDetail(med.id);
+    }
+  });
+};
+
+// ── Show "View Details" button in dose action modal ────────────────────
+const _origOpenDoseAction = openDoseAction;
+openDoseAction = function(medId, time, dk, h, m){
+  _origOpenDoseAction(medId, time, dk, h, m);
+  // Inject detail button after manage-btns if not already there
+  setTimeout(()=>{
+    const body = document.getElementById('actionModalBody');
+    if(body && !body.querySelector('.detail-link-btn')){
+      const btn = document.createElement('button');
+      btn.className = 'detail-link-btn';
+      btn.style.cssText = 'width:100%;background:none;border:1px solid var(--border);color:var(--primary);border-radius:10px;padding:9px;font-family:\'Cairo\',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;margin-top:10px';
+      btn.textContent = '📊 عرض تفاصيل الدواء وإحصائياته';
+      btn.onclick = ()=>{ closeAllModals(); openMedDetail(medId); };
+      body.appendChild(btn);
+    }
+  }, 50);
+};
+
 </script>
 
 <!-- PWA -->
